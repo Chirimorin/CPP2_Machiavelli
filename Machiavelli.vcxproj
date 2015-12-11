@@ -93,6 +93,12 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /C /Y "$(SolutionDir)Resources\*" "$(TargetDir)Resources\"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /S /Q $(TargetDir)Resources\</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -106,6 +112,12 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /C /Y "$(SolutionDir)Resources\*" "$(TargetDir)Resources\"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /S /Q $(TargetDir)Resources\</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -123,6 +135,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /C /Y "$(SolutionDir)Resources\*" "$(TargetDir)Resources\"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /S /Q $(TargetDir)Resources\</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -140,9 +158,18 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /C /Y "$(SolutionDir)Resources\*" "$(TargetDir)Resources\"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>rmdir /S /Q $(TargetDir)Resources\</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BouwKaart.h" />
     <ClInclude Include="ClientCommand.h" />
+    <ClInclude Include="Functions.hpp" />
+    <ClInclude Include="KaartStapel.h" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="stdafx.h" />
@@ -151,6 +178,8 @@
     <ClInclude Include="throw.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BouwKaart.cpp" />
+    <ClCompile Include="KaartStapel.cpp" />
     <ClCompile Include="Machiavelli.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Socket.cpp" />
@@ -161,6 +190,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="throw.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Bouwkaarten.csv">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="Resources\karakterkaarten.csv">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

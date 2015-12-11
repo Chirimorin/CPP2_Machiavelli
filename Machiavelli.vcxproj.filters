@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Sockets">
+      <UniqueIdentifier>{69db54fd-8d06-42e2-95c5-d619c6a1b901}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Models">
+      <UniqueIdentifier>{a9701b7b-dc6b-4426-839d-5eee180353b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Models">
+      <UniqueIdentifier>{d4097183-4371-4b6c-9b35-d09c79adda4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Sockets">
+      <UniqueIdentifier>{e39ff486-4f40-4406-99aa-ffb3493ab96e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -21,20 +33,29 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Player.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ClientCommand.h">
+      <Filter>Header Files\Sockets</Filter>
     </ClInclude>
     <ClInclude Include="Socket.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Sockets</Filter>
     </ClInclude>
     <ClInclude Include="Sync_queue.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="BouwKaart.h">
+      <Filter>Header Files\Models</Filter>
     </ClInclude>
     <ClInclude Include="throw.h">
+      <Filter>Header Files\Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ClientCommand.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="KaartStapel.h">
+      <Filter>Header Files\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -45,13 +66,27 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="BouwKaart.cpp">
+      <Filter>Source Files\Models</Filter>
     </ClCompile>
     <ClCompile Include="Socket.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Sockets</Filter>
     </ClCompile>
     <ClCompile Include="throw.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Sockets</Filter>
     </ClCompile>
+    <ClCompile Include="KaartStapel.cpp">
+      <Filter>Source Files\Models</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Bouwkaarten.csv">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\karakterkaarten.csv">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

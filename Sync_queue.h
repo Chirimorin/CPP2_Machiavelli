@@ -6,12 +6,6 @@
 #ifndef __Sync_queue__
 #define __Sync_queue__
 
-#include <mutex>
-#include <condition_variable>
-#include <list>
-#include <future>
-#include <thread>
-
 template<typename T>
 class Sync_queue {
 public:
