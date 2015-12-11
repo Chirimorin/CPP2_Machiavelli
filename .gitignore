@@ -26,3 +26,8 @@
 *.exe
 *.out
 *.app
+Debug/
+ipch/
+*.sdf
+*.opensdf
+Release/
