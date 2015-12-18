@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "KaartStapel.h"
 #include "GameController.h"
 
 using namespace std;

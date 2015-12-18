@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "GameController.h"
-#include "KaartStapel.h"
 
 GameController& GameController::getInstance()
 {
@@ -21,5 +20,24 @@ void GameController::removePlayer(std::shared_ptr<Player> player)
 GameController::GameController()
 {
 	std::cout << "GameController ctor\n";
+
+	loadCharacterCards();
 	kaartStapel_ = std::make_unique<KaartStapel>();
+	
+}
+
+void GameController::loadCharacterCards()
+{
+	std::ifstream karakterkaarten("Resources/karakterkaarten.csv");
+
+	if (karakterkaarten)
+	{
+		while (!karakterkaarten.eof())
+		{
+			std::unique_ptr<KarakterKaart> kaart(new KarakterKaart);
+			karakterkaarten >> *kaart;
+			if (kaart->isValid())
+				karkaterKaarten_.push_back(std::move(kaart));
+		}
+	}
 }
