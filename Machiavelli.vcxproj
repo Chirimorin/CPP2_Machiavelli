@@ -171,6 +171,7 @@
     <ClInclude Include="Functions.hpp" />
     <ClInclude Include="GameController.h" />
     <ClInclude Include="KaartStapel.h" />
+    <ClInclude Include="KarakterKaart.h" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="stdafx.h" />
@@ -182,6 +183,7 @@
     <ClCompile Include="BouwKaart.cpp" />
     <ClCompile Include="GameController.cpp" />
     <ClCompile Include="KaartStapel.cpp" />
+    <ClCompile Include="KarakterKaart.cpp" />
     <ClCompile Include="Machiavelli.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Socket.cpp" />
