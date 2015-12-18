@@ -26,8 +26,11 @@ void consume_command() // runs in its own thread
 			shared_ptr<Socket> client{ command.get_client() };
 			shared_ptr<Player> player{ command.get_player() };
 			try {
-				// TODO handle command here
-				*client << player->get_name() << ", you wrote: '" << command.get_cmd() << "', but I'll ignore that for now.\r\n" << machiavelli::prompt;
+				if (!GameController::getInstance().handleCommand(command))
+				{
+					*client << "Commando '" << command.get_cmd() << "' wordt niet herkent.\r\n";
+				}
+				*client << machiavelli::prompt;
 			}
 			catch (const exception& ex) {
 				cerr << "*** exception in consumer thread for player " << player->get_name() << ": " << ex.what() << '\n';
