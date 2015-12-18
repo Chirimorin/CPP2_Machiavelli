@@ -3,6 +3,7 @@
 
 KaartStapel::KaartStapel()
 {
+	std::cout << "KaartStapel ctor\n";
 	std::ifstream bouwkaarten("Resources/Bouwkaarten.csv");
 
 	if (bouwkaarten)
@@ -18,5 +19,5 @@ KaartStapel::KaartStapel()
 
 	std::random_shuffle(stapel_.begin(), stapel_.end());
 
-	std::cout << stapel_.size() << '\n';
+	std::cout << stapel_.size() << " kaarten ingeladen.\n";
 }

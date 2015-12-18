@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "KaartStapel.h"
 #include "GameController.h"
 
 using namespace std;
@@ -57,6 +56,8 @@ void handle_client(shared_ptr<Socket> client) // this function runs in a separat
 		client->write(machiavelli::prompt);
 		string name{ client->readline() };
 		shared_ptr<Player> player{ new Player{ name } };
+
+		GameController::getInstance().addPlayer(player, client);
 		*client << "Welcome, " << name << ", have fun playing our game!\r\n" << machiavelli::prompt;
 
 		while (true) { // game loop
@@ -82,6 +83,7 @@ void handle_client(shared_ptr<Socket> client) // this function runs in a separat
 			}
 		}
 		client->close();
+		GameController::getInstance().removePlayer(player);
 	}
 	catch (...) {
 		cerr << "handle_client crashed\n";
