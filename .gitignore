@@ -31,3 +31,4 @@ ipch/
 *.sdf
 *.opensdf
 Release/
+.vs/
