@@ -7,6 +7,5 @@ public:
 	KaartStapel();
 	~KaartStapel() {};
 private:
-	std::vector<std::unique_ptr<BouwKaart>> stapel_;
+	std::deque<std::unique_ptr<BouwKaart>> stapel_;
 };
-

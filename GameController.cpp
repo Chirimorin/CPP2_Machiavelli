@@ -8,6 +8,16 @@ GameController& GameController::getInstance()
 	return instance;
 }
 
+void GameController::addPlayer(std::shared_ptr<Player> player, std::shared_ptr<Socket> client)
+{
+	spelers_.insert(std::make_pair(player, client));
+}
+
+void GameController::removePlayer(std::shared_ptr<Player> player)
+{
+	spelers_.erase(player);
+}
+
 GameController::GameController()
 {
 	std::cout << "GameController ctor\n";
