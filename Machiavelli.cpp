@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "KaartStapel.h"
+#include "GameController.h"
 
 using namespace std;
 
@@ -89,8 +90,6 @@ void handle_client(shared_ptr<Socket> client) // this function runs in a separat
 
 int main(int argc, const char * argv[])
 {
-	KaartStapel();
-
 	// start command consumer thread
 	thread consumer{ consume_command };
 
