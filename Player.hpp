@@ -21,9 +21,11 @@ public:
 	std::string get_name() const { return name; }
 	void set_name(const std::string& new_name) { name = new_name; }
 
+	void addCharacterCard(std::unique_ptr<KarakterKaart> characterCard);
 	std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
 	std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
-	
+	void viewCharacterCards(std::shared_ptr<Socket> &client);
+
 private:
 	std::string name;
 	std::vector<std::unique_ptr<KarakterKaart>> karakterKaarten_;

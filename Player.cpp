@@ -10,6 +10,11 @@
 #include "Player.hpp"
 using namespace std;
 
+void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard)
+{
+	karakterKaarten_.push_back(move(characterCard));
+}
+
 vector<unique_ptr<KarakterKaart>> Player::addCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten, shared_ptr<Socket> &client)
 {
 	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten, client);
@@ -49,3 +54,9 @@ unique_ptr<KarakterKaart> Player::chooseCharacterCard(vector<unique_ptr<Karakter
 	return move(*it);
 }
 
+void Player::viewCharacterCards(std::shared_ptr<Socket> &client) {
+	for (unique_ptr<KarakterKaart> & kaart : karakterKaarten_) {
+		*client << kaart->getName();
+		&kaart != &karakterKaarten_.back() ? *client << ", " : *client << "\r\n";
+	}
+}

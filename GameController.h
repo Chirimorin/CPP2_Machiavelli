@@ -24,8 +24,11 @@ private:
 	std::unique_ptr<KaartStapel> kaartStapel_;
 	std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>> spelers_;
 	std::shared_ptr<Player> koning_;
+	bool cheat_ = false;
 
 	bool startGame();
 	void loadCharacterCards();
 	void distributeCharacterCards();
+	void cheatDistributeCharacterCards();
+	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 };
