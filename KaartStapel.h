@@ -6,6 +6,7 @@ class KaartStapel
 public:
 	KaartStapel();
 	~KaartStapel() { std::cout << "KaartStapel dtor\n"; }
+	std::unique_ptr<BouwKaart> getBuildCard();
 private:
 	std::deque<std::unique_ptr<BouwKaart>> stapel_;
 };

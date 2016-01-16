@@ -10,8 +10,11 @@
 #include "Player.hpp"
 using namespace std;
 
-void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard)
-{
+void Player::addBuildCard(std::unique_ptr<BouwKaart> buildCard) {
+	bouwKaarten_.push_back(move(buildCard));
+}
+
+void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard) {
 	karakterKaarten_.push_back(move(characterCard));
 }
 
@@ -55,8 +58,27 @@ unique_ptr<KarakterKaart> Player::chooseCharacterCard(vector<unique_ptr<Karakter
 }
 
 void Player::viewCharacterCards(std::shared_ptr<Socket> &client) {
+	*client << "Je hebt de volgende karakterkaarten: \r\n";
 	for (unique_ptr<KarakterKaart> & kaart : karakterKaarten_) {
 		*client << kaart->getName();
-		&kaart != &karakterKaarten_.back() ? *client << ", " : *client << "\r\n";
+		&kaart != &karakterKaarten_.back() ? *client << ", " : *client << ".\r\n";
 	}
+}
+
+void Player::viewBuildCards(std::shared_ptr<Socket> &client) {
+	*client << "Je hebt de volgende bouwkaarten: \r\n";
+	for (unique_ptr<BouwKaart> & kaart : bouwKaarten_) {
+		*client << kaart->getName();
+		&kaart != &bouwKaarten_.back() ? *client << ", " : *client << ".\r\n";
+	}
+}
+
+void Player::viewGold(std::shared_ptr<Socket> &client) {
+	*client << "Je hebt op dit moment " << goudstukken_ << " goudstuk(ken).\r\n";
+}
+
+void Player::viewAllPlayerInfo(std::shared_ptr<Socket> &client) {
+	viewCharacterCards(client);
+	viewBuildCards(client);
+	viewGold(client);
 }

@@ -61,6 +61,7 @@ bool GameController::startGame()
 		return false;
 
 	gameStarted_ = true;
+	goudstukken_ = 30;
 	kaartStapel_ = std::make_unique<KaartStapel>();
 	loadCharacterCards();
 
@@ -71,11 +72,32 @@ bool GameController::startGame()
 
 	messageAllPlayers("Speler " + koning_->get_name() + " is de koning.");
 
+	// Verdeel karakterkaarten
 	if (cheat_) {
 		cheatDistributeCharacterCards();
 	}
 	else {
 		distributeCharacterCards();
+	}
+
+	// Verdeel bouwkaarten
+	for (int i = 0; i < 4; i++) {
+		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
+		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
+			iterator->first->addBuildCard(kaartStapel_->getBuildCard());
+		}
+	}
+
+	// Verdeel goudstukken
+	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
+	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
+		iterator->first->set_gold(2);
+	}
+
+	// Toon speler informatie
+	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
+	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
+		iterator->first->viewAllPlayerInfo(iterator->second);
 	}
 
 	return true;
@@ -154,23 +176,15 @@ void GameController::cheatDistributeCharacterCards()
 		// Verdeel karakaterkaarten
 		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
 		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-
 			addRandomCharacterCard(currentKarakterKaarten, iterator->first);
 			addRandomCharacterCard(currentKarakterKaarten, iterator->first);
-		}
-
-		// Spelers karakterkaarten laten zien
-		messageAllPlayers("Je hebt de volgende karakterkaarten:");
-		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-			iterator->first->viewCharacterCards(iterator->second);
-		}
+		}		
 	}
 }
 
 void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player)
 {
-	int index = Random::getRandomNumber(0, currentKarakterKaarten.size() - 1);
+	int index = Random::getRandomNumber(0, static_cast<int>(currentKarakterKaarten.size() - 1));
 	std::unique_ptr<KarakterKaart> karakterkaart = std::move(currentKarakterKaarten.at(index));
 	player->addCharacterCard(std::move(karakterkaart));
 	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
