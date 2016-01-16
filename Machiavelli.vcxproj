@@ -173,6 +173,7 @@
     <ClInclude Include="KaartStapel.h" />
     <ClInclude Include="KarakterKaart.h" />
     <ClInclude Include="Player.hpp" />
+    <ClInclude Include="Random.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Sync_queue.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="KarakterKaart.cpp" />
     <ClCompile Include="Machiavelli.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Random.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
