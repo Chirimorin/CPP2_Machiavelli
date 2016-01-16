@@ -10,42 +10,42 @@
 #include "Player.hpp"
 using namespace std;
 
-std::vector<std::unique_ptr<KarakterKaart>> Player::addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client)
+vector<unique_ptr<KarakterKaart>> Player::addCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten, shared_ptr<Socket> &client)
 {
-	std::unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten, client);
-	karakterKaarten_.push_back(std::move(karakterkaart));
-	currentKarakterKaarten.erase(std::remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
-	return std::move(currentKarakterKaarten);
+	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten, client);
+	karakterKaarten_.push_back(move(karakterkaart));
+	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
+	return move(currentKarakterKaarten);
 }
 
-std::vector<std::unique_ptr<KarakterKaart>> Player::discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client)
+vector<unique_ptr<KarakterKaart>> Player::discardCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten, shared_ptr<Socket> &client)
 {
-	std::unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten, client);
-	currentKarakterKaarten.erase(std::remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
-	return std::move(currentKarakterKaarten);
+	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten, client);
+	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
+	return move(currentKarakterKaarten);
 }
 
-std::unique_ptr<KarakterKaart> Player::chooseCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client)
+unique_ptr<KarakterKaart> Player::chooseCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten, shared_ptr<Socket> &client)
 {
 	*client << "De karakterkaarten zijn:\r\n";
-	for (std::unique_ptr<KarakterKaart> & kaart : currentKarakterKaarten) {
+	for (unique_ptr<KarakterKaart> & kaart : currentKarakterKaarten) {
 		*client << kaart->getName();
 		&kaart != &currentKarakterKaarten.back() ? *client << ", " : *client << "\r\n";
 	}
 	*client << "Welke karakterkaart wil je hebben?\r\n";
 
-	std::string kaartNaam = client->readline();
+	string kaartNaam = client->readline();
 	*client << "Ingetypt: " << kaartNaam << "\r\n"; // MOET WEG
 
-	auto it = std::find_if(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), [kaartNaam](std::unique_ptr<KarakterKaart>& kaart) {return kaart->getName() == kaartNaam; });
-	std::cout << "Ingetypt: " << kaartNaam << "\r\n"; // MOET WEG
+	auto it = find_if(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), [kaartNaam](unique_ptr<KarakterKaart>& kaart) {return kaart->getName() == kaartNaam; });
+	cout << "Ingetypt: " << kaartNaam << "\r\n"; // MOET WEG
 
 	while (it == currentKarakterKaarten.end()) {
 		*client << "De ingevoerde karakterkaart wordt niet herkent. Probeer het opnieuw.\r\n";
 		kaartNaam = client->readline();
-		it = std::find_if(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), [kaartNaam](std::unique_ptr<KarakterKaart>& kaart) {return kaart->getName() == kaartNaam; });
+		it = find_if(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), [kaartNaam](unique_ptr<KarakterKaart>& kaart) {return kaart->getName() == kaartNaam; });
 	}
 
-	return std::move(*it);
+	return move(*it);
 }
 
