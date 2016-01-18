@@ -7,6 +7,7 @@ public:
 	~KarakterKaart() {};
 
 	bool isValid() const { return isValid_; };
+	std::string getName() { return naam_; };
 
 	friend std::istream& operator>>(std::istream& is, KarakterKaart& kaart);
 private:

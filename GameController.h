@@ -20,9 +20,16 @@ private:
 	~GameController() {};
 
 	bool gameStarted_ = false;
-	bool startGame();
-	std::vector<std::unique_ptr<KarakterKaart>> karkaterKaarten_;
+	std::vector<std::unique_ptr<KarakterKaart>> karakterKaarten_;
 	std::unique_ptr<KaartStapel> kaartStapel_;
 	std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>> spelers_;
+	std::shared_ptr<Player> koning_;
+	int goudstukken_ = 30;
+	bool cheat_ = false;
+
+	bool startGame();
 	void loadCharacterCards();
+	void distributeCharacterCards();
+	void cheatDistributeCharacterCards();
+	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 };

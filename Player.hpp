@@ -9,6 +9,9 @@
 #ifndef Player_hpp
 #define Player_hpp
 
+#include "KarakterKaart.h"
+#include "BouwKaart.h"
+#include "Socket.h"
 #include <string>
 
 class Player {
@@ -18,9 +21,28 @@ public:
 	
 	std::string get_name() const { return name; }
 	void set_name(const std::string& new_name) { name = new_name; }
+
+	int get_gold() const { return goudstukken_; }
+	void set_gold(const int& new_gold) { goudstukken_ = new_gold; }
+
+	void addBuildCard(std::unique_ptr<BouwKaart> buildCard);
+
+	void addCharacterCard(std::unique_ptr<KarakterKaart> characterCard);
+	std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
+	std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
 	
+	void viewCharacterCards(std::shared_ptr<Socket> &client);
+	void viewBuildCards(std::shared_ptr<Socket> &client);
+	void viewGold(std::shared_ptr<Socket> &client);
+	void viewAllPlayerInfo(std::shared_ptr<Socket> &client);
+
 private:
 	std::string name;
+	int goudstukken_ = 0;
+	std::vector<std::unique_ptr<KarakterKaart>> karakterKaarten_;
+	std::vector<std::unique_ptr<BouwKaart>> bouwKaarten_;
+
+	std::unique_ptr<KarakterKaart> chooseCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
 };
 
 #endif /* Player_hpp */

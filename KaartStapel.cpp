@@ -6,10 +6,8 @@ KaartStapel::KaartStapel()
 	std::cout << "KaartStapel ctor\n";
 	std::ifstream bouwkaarten("Resources/Bouwkaarten.csv");
 
-	if (bouwkaarten)
-	{
-		while (!bouwkaarten.eof())
-		{
+	if (bouwkaarten) {
+		while (!bouwkaarten.eof()) {
 			std::unique_ptr<BouwKaart> kaart(new BouwKaart);
 			bouwkaarten >> *kaart;
 			if (kaart->IsValid())
@@ -20,4 +18,11 @@ KaartStapel::KaartStapel()
 	std::random_shuffle(stapel_.begin(), stapel_.end());
 
 	std::cout << stapel_.size() << " kaarten ingeladen.\n";
+}
+
+std::unique_ptr<BouwKaart> KaartStapel::getBuildCard()
+{
+	std::unique_ptr<BouwKaart> bouwkaart = std::move(stapel_.front());
+	stapel_.pop_front();
+	return bouwkaart;
 }
