@@ -5,6 +5,11 @@
 #include "Socket.h"
 #include "Random.h"
 
+namespace machiavelli {
+	const std::string clearPrompt{ "\r             \r" };
+	const std::string prompt       { "machiavelli> " };
+}
+
 GameController& GameController::getInstance()
 {
 	static GameController instance;
@@ -28,15 +33,26 @@ bool GameController::handleCommand(ClientCommand& command)
 	std::shared_ptr<Socket> client{ command.get_client() };
 	std::shared_ptr<Player> player{ command.get_player() };
 
-	if (command.get_cmd() == "start") {
-		if (spelers_.size() >= 2)
-			return startGame();
-	}
-	if (command.get_cmd() == "start cheat") {
-		if (spelers_.size() >= 2) {
-			cheat_ = true;
-			return startGame();
+	if (currentState_ == GameState::NotStarted)
+	{
+		if (command.get_cmd() == "start") {
+			if (spelers_.size() >= 2)
+				return startGame();
 		}
+		if (command.get_cmd() == "start cheat") {
+			if (spelers_.size() >= 2) {
+				cheat_ = true;
+				return startGame();
+			}
+		}
+	}
+	else if (currentState_ == GameState::DistributeCharacters)
+	{
+		// TODO: handle command voor characters kiezen
+	}
+	else if (currentState_ == GameState::PlayTurn)
+	{
+		// TODO: handle command voor de beurt van een speler
 	}
 
 	return false;
@@ -46,8 +62,14 @@ void GameController::messageAllPlayers(std::string message)
 {
 	for (std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> pair : spelers_)
 	{
-		*pair.second << message << "\r\n";
+		messagePlayer(pair.first, message);
+		//*pair.second << machiavelli::clearPrompt << message << "\r\n" << machiavelli::prompt;
 	}
+}
+
+void GameController::messagePlayer(std::shared_ptr<Player> speler, std::string message)
+{
+	*spelers_[speler] << machiavelli::clearPrompt << message << "\r\n" << machiavelli::prompt;
 }
 
 GameController::GameController()
@@ -57,24 +79,14 @@ GameController::GameController()
 
 bool GameController::startGame()
 {
-	if (gameStarted_)
-		return false;
+	messageAllPlayers("\33[2JHet spel begint nu");
 
-	gameStarted_ = true;
 	goudstukken_ = 30;
 	kaartStapel_ = std::make_unique<KaartStapel>();
 	loadCharacterCards();
 
-	// Bepaal de koning
-	auto it = spelers_.begin();
-	std::advance(it, Random::getRandomNumber(0, static_cast<int>(spelers_.size()-1)));
-	koning_ = it->first;
-
-	messageAllPlayers("Speler " + koning_->get_name() + " is de koning.");
-
 	for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
 		std::shared_ptr<Player> speler = iterator->first;
-		std::shared_ptr<Socket> socket = iterator->second;
 
 		// Verdeel bouwkaarten
 		for (int i = 0; i < 4; i++)
@@ -86,9 +98,14 @@ bool GameController::startGame()
 		speler->set_gold(2);
 
 		// Toon speler informatie
-		speler->viewAllPlayerInfo(socket);
+		messagePlayer(speler, speler->getPlayerInfo());
 	}
 	
+	// Bepaal de koning
+	auto it = spelers_.begin();
+	std::advance(it, Random::getRandomNumber(0, static_cast<int>(spelers_.size() - 1)));
+	koning_ = it->first;
+
 	// Verdeel karakterkaarten
 	if (cheat_) {
 		cheatDistributeCharacterCards();
@@ -119,48 +136,80 @@ void GameController::loadCharacterCards()
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)
 void GameController::distributeCharacterCards()
 {
-	if (spelers_.size() == 2) {
-		std::vector<std::unique_ptr<KarakterKaart>> currentKarakterKaarten = std::move(karakterKaarten_);
-		std::shuffle(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), Random::getEngine());
+	currentState_ = GameState::DistributeCharacters;
 
-		// De koning bekijkt de bovenste karakterkaart en legt deze gedekt op tafel
-		*spelers_.find(koning_)->second << "De afgelegde karakterkaart is: " << currentKarakterKaarten.at(0)->getInfo() << "\r\n";
-		currentKarakterKaarten.erase(std::remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), currentKarakterKaarten.at(0)), currentKarakterKaarten.end());
+	// TODO: alle characterkaarten terug pakken van de spelers
 
-		// De koning kiest 1 van de 7 overgebleven karakterkaarten
-		//currentKarakterKaarten = koning_->addCharacterCard(currentKarakterKaarten, spelers_.find(koning_)->second);
-		koning_->addCharacterCard(currentKarakterKaarten, spelers_.find(koning_)->second);
+	// Schud de karakterkaarten
+	std::random_shuffle(karakterKaarten_.begin(), karakterKaarten_.end());
+	
+	// Bepaal de koning
+	messageAllPlayers(koning_->get_name() + " is de koning deze ronde.");
+	currentPlayer_ = koning_;
 
-		// TODO: Moet op een betere manier
-		// Van de 6 overgebleven karakterkaarten kiest de andere speler 1 kaart en legt 1 kaart gedekt op tafel
-		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-			if (iterator->first != koning_) {
-				//currentKarakterKaarten = iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-				//currentKarakterKaarten = iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-				iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-				iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-			}
-		}
+	// Gooi 1 karakterkaart weg
+	auto last = karakterKaarten_.end() - 1;
+	messagePlayer(koning_, "Het karakter " + last->get()->getInfo() + " is weggegooid.");
+	discardedKarakterKaarten_.push_back(std::move(*last));
+	karakterKaarten_.erase(last, karakterKaarten_.end());
+	
+	promptForCharacterCard();
 
-		// Van de 4 overgebleven karakterkaarten kiest de koning  1 kaart en legt 1 kaart gedekt op tafel
-		//currentKarakterKaarten = koning_->addCharacterCard(currentKarakterKaarten, spelers_.find(koning_)->second);
-		//currentKarakterKaarten = koning_->discardCharacterCard(currentKarakterKaarten, spelers_.find(koning_)->second);
-		koning_->addCharacterCard(currentKarakterKaarten, spelers_.find(koning_)->second);
-		koning_->discardCharacterCard(currentKarakterKaarten, spelers_.find(koning_)->second);
 
-		// TODO: Moet op een betere manier
-		// Van de 2 overgebleven karakterkaarten kiest de andere speler 1 kaart en legt 1 kaart gedekt op tafel
-		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-			if (iterator->first != koning_) {
-				//currentKarakterKaarten = iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-				//currentKarakterKaarten = iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-				iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-				iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-			}
-		}
-	}
+	//if (spelers_.size() == 2) {
+	//	std::vector<std::unique_ptr<KarakterKaart>> currentKarakterKaarten = std::move(karakterKaarten_);
+	//	std::shuffle(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), Random::getEngine());
+
+	//	// De koning bekijkt de bovenste karakterkaart en legt deze gedekt op tafel
+	//	*spelers_[koning_] << "De afgelegde karakterkaart is: " << currentKarakterKaarten.at(0)->getInfo() << "\r\n";
+	//	currentKarakterKaarten.erase(std::remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), currentKarakterKaarten.at(0)), currentKarakterKaarten.end());
+
+	//	// De koning kiest 1 van de 7 overgebleven karakterkaarten
+	//	//currentKarakterKaarten = koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
+	//	koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
+
+	//	// TODO: Moet op een betere manier
+	//	// Van de 6 overgebleven karakterkaarten kiest de andere speler 1 kaart en legt 1 kaart gedekt op tafel
+	//	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
+	//	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
+	//		if (iterator->first != koning_) {
+	//			//currentKarakterKaarten = iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
+	//			//currentKarakterKaarten = iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
+	//			iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
+	//			iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
+	//		}
+	//	}
+
+	//	// Van de 4 overgebleven karakterkaarten kiest de koning  1 kaart en legt 1 kaart gedekt op tafel
+	//	//currentKarakterKaarten = koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
+	//	//currentKarakterKaarten = koning_->discardCharacterCard(currentKarakterKaarten, spelers_[koning_]);
+	//	koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
+	//	koning_->discardCharacterCard(currentKarakterKaarten, spelers_[koning_]);
+
+	//	// TODO: Moet op een betere manier
+	//	// Van de 2 overgebleven karakterkaarten kiest de andere speler 1 kaart en legt 1 kaart gedekt op tafel
+	//	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
+	//	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
+	//		if (iterator->first != koning_) {
+	//			//currentKarakterKaarten = iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
+	//			//currentKarakterKaarten = iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
+	//			iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
+	//			iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
+	//		}
+	//	}
+	//}
+}
+
+void GameController::promptForCharacterCard()
+{
+	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
+
+	messagePlayer(currentPlayer_, "Kies een van de volgende characterkaarten: ");
+	
+}
+
+void GameController::getCharacterCard(std::string name)
+{
 }
 
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)
@@ -172,7 +221,7 @@ void GameController::cheatDistributeCharacterCards()
 
 		// Verdeel karakaterkaarten
 		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
+		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
 			addRandomCharacterCard(currentKarakterKaarten, iterator->first);
 			addRandomCharacterCard(currentKarakterKaarten, iterator->first);
 		}		

@@ -26,15 +26,20 @@ public:
 	void set_gold(const int& new_gold) { goudstukken_ = new_gold; }
 
 	void addBuildCard(std::unique_ptr<BouwKaart> buildCard);
-
 	void addCharacterCard(std::unique_ptr<KarakterKaart> characterCard);
-	std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
-	std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
-	
-	void viewCharacterCards(std::shared_ptr<Socket> &client);
-	void viewBuildCards(std::shared_ptr<Socket> &client);
-	void viewGold(std::shared_ptr<Socket> &client);
-	void viewAllPlayerInfo(std::shared_ptr<Socket> &client);
+
+	std::string getPlayerInfo();
+	std::string getCharacterCards();
+	std::string getBuildCards();
+	std::string getGold();
+
+	//std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
+	//std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
+	//
+	//void viewCharacterCards();
+	//void viewBuildCards();
+	//void viewGold();
+	//void viewAllPlayerInfo();
 
 private:
 	std::string name;
@@ -42,7 +47,7 @@ private:
 	std::vector<std::unique_ptr<KarakterKaart>> karakterKaarten_;
 	std::vector<std::unique_ptr<BouwKaart>> bouwKaarten_;
 
-	std::unique_ptr<KarakterKaart> chooseCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Socket> &client);
+	//std::unique_ptr<KarakterKaart> chooseCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
 };
 
 #endif /* Player_hpp */
