@@ -4,7 +4,6 @@
 #include "Player.hpp"
 #include "Socket.h"
 #include "Random.h"
-#include <locale>
 
 namespace machiavelli {
 	const std::string clearPrompt{ "\r             \r" };
@@ -166,7 +165,7 @@ void GameController::distributeCharacterCards()
 	// TODO: alle characterkaarten terug pakken van de spelers
 
 	// Schud de karakterkaarten
-	std::random_shuffle(karakterKaarten_.begin(), karakterKaarten_.end());
+	std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
 	
 	// Bepaal de koning
 	messageAllPlayers(koning_->get_name() + " is de koning deze ronde.");
@@ -180,50 +179,6 @@ void GameController::distributeCharacterCards()
 	
 	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
 	promptForCharacterCard();
-
-
-	//if (spelers_.size() == 2) {
-	//	std::vector<std::unique_ptr<KarakterKaart>> currentKarakterKaarten = std::move(karakterKaarten_);
-	//	std::shuffle(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), Random::getEngine());
-
-	//	// De koning bekijkt de bovenste karakterkaart en legt deze gedekt op tafel
-	//	*spelers_[koning_] << "De afgelegde karakterkaart is: " << currentKarakterKaarten.at(0)->getInfo() << "\r\n";
-	//	currentKarakterKaarten.erase(std::remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), currentKarakterKaarten.at(0)), currentKarakterKaarten.end());
-
-	//	// De koning kiest 1 van de 7 overgebleven karakterkaarten
-	//	//currentKarakterKaarten = koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
-	//	koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
-
-	//	// TODO: Moet op een betere manier
-	//	// Van de 6 overgebleven karakterkaarten kiest de andere speler 1 kaart en legt 1 kaart gedekt op tafel
-	//	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-	//	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-	//		if (iterator->first != koning_) {
-	//			//currentKarakterKaarten = iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-	//			//currentKarakterKaarten = iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-	//			iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-	//			iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-	//		}
-	//	}
-
-	//	// Van de 4 overgebleven karakterkaarten kiest de koning  1 kaart en legt 1 kaart gedekt op tafel
-	//	//currentKarakterKaarten = koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
-	//	//currentKarakterKaarten = koning_->discardCharacterCard(currentKarakterKaarten, spelers_[koning_]);
-	//	koning_->addCharacterCard(currentKarakterKaarten, spelers_[koning_]);
-	//	koning_->discardCharacterCard(currentKarakterKaarten, spelers_[koning_]);
-
-	//	// TODO: Moet op een betere manier
-	//	// Van de 2 overgebleven karakterkaarten kiest de andere speler 1 kaart en legt 1 kaart gedekt op tafel
-	//	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-	//	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-	//		if (iterator->first != koning_) {
-	//			//currentKarakterKaarten = iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-	//			//currentKarakterKaarten = iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-	//			iterator->first->addCharacterCard(currentKarakterKaarten, iterator->second);
-	//			iterator->first->discardCharacterCard(currentKarakterKaarten, iterator->second);
-	//		}
-	//	}
-	//}
 }
 
 void GameController::promptForCharacterCard()
@@ -294,18 +249,7 @@ void GameController::removeCharacterCard(std::string name)
 	discardedKarakterKaarten_.push_back(std::move(*it));
 	karakterKaarten_.erase(it);
 
-	// TODO: volgende speler kiezen of het spel starten
-
 	nextPlayer();
-
-	if (currentPlayer_ == koning_ &&
-		currentPlayer_->getCharacterCardCount() == 2)
-	{
-		currentState_ = GameState::PlayTurn;
-		messageAllPlayers("Alle karakters zijn gekozen. De ronde begint nu");
-		// TODO: ronde starten
-		return;
-	}
 	currentState_ = GameState::ChooseCharacter;
 	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
 	promptForCharacterCard();
