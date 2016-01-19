@@ -107,7 +107,8 @@ bool GameController::startGame()
 		speler->set_gold(2);
 
 		// Toon speler informatie
-		messagePlayer(speler, speler->getPlayerInfo());
+		messagePlayer(speler, speler->getBuildCardInfo());
+		messagePlayer(speler, speler->getGoldInfo());
 	}
 	
 	// Bepaal de koning
@@ -271,15 +272,22 @@ void GameController::removeCharacterCard(std::string name)
 void GameController::cheatDistributeCharacterCards()
 {
 	if (spelers_.size() == 2) {
-		std::vector<std::unique_ptr<KarakterKaart>> currentKarakterKaarten = std::move(karakterKaarten_);
-		std::shuffle(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), Random::getEngine());
+		std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
 
 		// Verdeel karakaterkaarten
-		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
-			addRandomCharacterCard(currentKarakterKaarten, iterator->first);
-			addRandomCharacterCard(currentKarakterKaarten, iterator->first);
-		}		
+		for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
+			for (int i = 0; i < 2; ++i)
+			{
+				auto cardIt = --karakterKaarten_.end();
+				iterator->first->addCharacterCard(std::move(*cardIt));
+				karakterKaarten_.erase(cardIt);
+			}
+		}
+
+		messageAllPlayers("Karakterkaarten zijn automatisch verdeeld");
+
+		currentState_ = GameState::PlayTurn;
+		//TODO start turn
 	}
 }
 
