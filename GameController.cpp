@@ -72,32 +72,29 @@ bool GameController::startGame()
 
 	messageAllPlayers("Speler " + koning_->get_name() + " is de koning.");
 
+	for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
+		std::shared_ptr<Player> speler = iterator->first;
+		std::shared_ptr<Socket> socket = iterator->second;
+
+		// Verdeel bouwkaarten
+		for (int i = 0; i < 4; i++)
+		{
+			speler->addBuildCard(kaartStapel_->getBuildCard());
+		}
+
+		// Verdeel goudstukken
+		speler->set_gold(2);
+
+		// Toon speler informatie
+		speler->viewAllPlayerInfo(socket);
+	}
+	
 	// Verdeel karakterkaarten
 	if (cheat_) {
 		cheatDistributeCharacterCards();
 	}
 	else {
 		distributeCharacterCards();
-	}
-
-	// Verdeel bouwkaarten
-	for (int i = 0; i < 4; i++) {
-		typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-		for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-			iterator->first->addBuildCard(kaartStapel_->getBuildCard());
-		}
-	}
-
-	// Verdeel goudstukken
-	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-		iterator->first->set_gold(2);
-	}
-
-	// Toon speler informatie
-	typedef std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>>::iterator it_type;
-	for (it_type iterator = spelers_.begin(); iterator != spelers_.end(); iterator++) {
-		iterator->first->viewAllPlayerInfo(iterator->second);
 	}
 
 	return true;
@@ -127,7 +124,7 @@ void GameController::distributeCharacterCards()
 		std::shuffle(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), Random::getEngine());
 
 		// De koning bekijkt de bovenste karakterkaart en legt deze gedekt op tafel
-		*spelers_.find(koning_)->second << "De afgelegde karakterkaart is: " << currentKarakterKaarten.at(0)->getName() << "\r\n";
+		*spelers_.find(koning_)->second << "De afgelegde karakterkaart is: " << currentKarakterKaarten.at(0)->getInfo() << "\r\n";
 		currentKarakterKaarten.erase(std::remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), currentKarakterKaarten.at(0)), currentKarakterKaarten.end());
 
 		// De koning kiest 1 van de 7 overgebleven karakterkaarten

@@ -37,7 +37,7 @@ unique_ptr<KarakterKaart> Player::chooseCharacterCard(vector<unique_ptr<Karakter
 {
 	*client << "De karakterkaarten zijn:\r\n";
 	for (unique_ptr<KarakterKaart> & kaart : currentKarakterKaarten) {
-		*client << kaart->getName();
+		*client << kaart->getInfo();
 		&kaart != &currentKarakterKaarten.back() ? *client << ", " : *client << "\r\n";
 	}
 	*client << "Welke karakterkaart wil je hebben?\r\n";
@@ -68,7 +68,7 @@ void Player::viewCharacterCards(std::shared_ptr<Socket> &client) {
 void Player::viewBuildCards(std::shared_ptr<Socket> &client) {
 	*client << "Je hebt de volgende bouwkaarten: \r\n";
 	for (unique_ptr<BouwKaart> & kaart : bouwKaarten_) {
-		*client << kaart->getName();
+		*client << kaart->getInfo();
 		&kaart != &bouwKaarten_.back() ? *client << ", " : *client << ".\r\n";
 	}
 }
