@@ -4,6 +4,7 @@
 #include "Player.hpp"
 #include "Socket.h"
 #include "Random.h"
+#include <locale>
 
 namespace machiavelli {
 	const std::string clearPrompt{ "\r             \r" };
@@ -46,11 +47,20 @@ bool GameController::handleCommand(ClientCommand& command)
 			}
 		}
 	}
-	else if (currentState_ == GameState::DistributeCharacters)
+	else if (currentState_ == GameState::ChooseCharacter &&
+			 currentPlayer_ == player)
 	{
-		// TODO: handle command voor characters kiezen
+		getCharacterCard(command.get_cmd());
+		return true;
 	}
-	else if (currentState_ == GameState::PlayTurn)
+	else if (currentState_ == GameState::RemoveCharacter &&
+		     currentPlayer_ == player)
+	{
+		removeCharacterCard(command.get_cmd());
+		return true;
+	}
+	else if (currentState_ == GameState::PlayTurn &&
+		     currentPlayer_ == player)
 	{
 		// TODO: handle command voor de beurt van een speler
 	}
@@ -136,7 +146,7 @@ void GameController::loadCharacterCards()
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)
 void GameController::distributeCharacterCards()
 {
-	currentState_ = GameState::DistributeCharacters;
+	currentState_ = GameState::ChooseCharacter;
 
 	// TODO: alle characterkaarten terug pakken van de spelers
 
@@ -153,6 +163,7 @@ void GameController::distributeCharacterCards()
 	discardedKarakterKaarten_.push_back(std::move(*last));
 	karakterKaarten_.erase(last, karakterKaarten_.end());
 	
+	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
 	promptForCharacterCard();
 
 
@@ -202,14 +213,62 @@ void GameController::distributeCharacterCards()
 
 void GameController::promptForCharacterCard()
 {
-	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
-
 	messagePlayer(currentPlayer_, "Kies een van de volgende characterkaarten: ");
 	
+	std::stringstream ss = std::stringstream();
+
+	for (std::unique_ptr<KarakterKaart>& kaart : karakterKaarten_)
+	{
+		ss << kaart->getInfo() << ", ";
+	}
+
+	messagePlayer(currentPlayer_, ss.str());
 }
 
 void GameController::getCharacterCard(std::string name)
 {
+	auto it = std::find_if(karakterKaarten_.begin(), karakterKaarten_.end(), [name](std::unique_ptr<KarakterKaart>& k)
+	{
+		return k.get()->getName() == name;
+	});
+
+	if (it == karakterKaarten_.end())
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldige karakterkaart.");
+		promptForCharacterCard();
+		return;
+	}
+
+	currentPlayer_->addCharacterCard(std::move(*it));
+	karakterKaarten_.erase(it);
+
+	currentState_ = GameState::RemoveCharacter;
+	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart weggooien.");
+	promptForCharacterCard();
+}
+
+void GameController::removeCharacterCard(std::string name)
+{
+	auto it = std::find_if(karakterKaarten_.begin(), karakterKaarten_.end(), [name](std::unique_ptr<KarakterKaart>& k)
+	{
+		return k.get()->getName() == name;
+	});
+
+	if (it == karakterKaarten_.end())
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldige karakterkaart.");
+		promptForCharacterCard();
+		return;
+	}
+
+	discardedKarakterKaarten_.push_back(std::move(*it));
+	karakterKaarten_.erase(it);
+
+	// TODO: volgende speler kiezen of het spel starten
+
+	currentState_ = GameState::ChooseCharacter;
+	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
+	promptForCharacterCard();
 }
 
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)

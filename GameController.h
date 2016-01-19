@@ -12,7 +12,8 @@ namespace machiavelli {
 enum class GameState
 {
 	NotStarted,
-	DistributeCharacters,
+	ChooseCharacter,
+	RemoveCharacter,
 	PlayTurn
 };
 
@@ -49,6 +50,7 @@ private:
 	void distributeCharacterCards();
 	void promptForCharacterCard();
 	void getCharacterCard(std::string name);
+	void removeCharacterCard(std::string name);
 	void cheatDistributeCharacterCards();
 	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 };
