@@ -21,10 +21,10 @@ void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard) {
 
 std::string Player::getPlayerInfo()
 {
-	return getCharacterCards() + "\r\n" + getBuildCards() + "\r\n" + getGold();
+	return getCharacterCardInfo() + "\r\n" + getBuildCardInfo() + "\r\n" + getGoldInfo();
 }
 
-std::string Player::getCharacterCards()
+std::string Player::getCharacterCardInfo()
 {
 	std::string result = "Je hebt de volgende karakterkaarten: \r\n";
 
@@ -37,7 +37,7 @@ std::string Player::getCharacterCards()
 	return result;
 }
 
-std::string Player::getBuildCards()
+std::string Player::getBuildCardInfo()
 {
 	std::string result = "Je hebt de volgende bouwkaarten: \r\n";
 
@@ -50,7 +50,7 @@ std::string Player::getBuildCards()
 	return result;
 }
 
-std::string Player::getGold()
+std::string Player::getGoldInfo()
 {
 	return "Je hebt momenteel " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
 }

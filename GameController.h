@@ -46,6 +46,7 @@ private:
 	GameState currentState_ = GameState::NotStarted;
 
 	bool startGame();
+	void nextPlayer();
 	void loadCharacterCards();
 	void distributeCharacterCards();
 	void promptForCharacterCard();

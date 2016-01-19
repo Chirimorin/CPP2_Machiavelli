@@ -127,6 +127,21 @@ bool GameController::startGame()
 	return true;
 }
 
+void GameController::nextPlayer()
+{
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first == currentPlayer_;
+	});
+
+	++it;
+
+	if (it == spelers_.end())
+		it = spelers_.begin();
+
+	currentPlayer_ = it->first;
+}
+
 void GameController::loadCharacterCards()
 {
 	std::ifstream karakterkaarten("Resources/karakterkaarten.csv");
@@ -242,6 +257,21 @@ void GameController::getCharacterCard(std::string name)
 	currentPlayer_->addCharacterCard(std::move(*it));
 	karakterKaarten_.erase(it);
 
+	if (karakterKaarten_.size() == 1)
+	{
+		currentState_ = GameState::PlayTurn;
+		messageAllPlayers("Alle karakters zijn gekozen. De ronde begint nu");
+		// TODO: ronde starten
+		return;
+	}
+	if (karakterKaarten_.size() == 6)
+	{
+		nextPlayer();
+		messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart weggooien.");
+		promptForCharacterCard();
+		return;
+	}
+
 	currentState_ = GameState::RemoveCharacter;
 	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart weggooien.");
 	promptForCharacterCard();
@@ -266,6 +296,16 @@ void GameController::removeCharacterCard(std::string name)
 
 	// TODO: volgende speler kiezen of het spel starten
 
+	nextPlayer();
+
+	if (currentPlayer_ == koning_ &&
+		currentPlayer_->getCharacterCardCount() == 2)
+	{
+		currentState_ = GameState::PlayTurn;
+		messageAllPlayers("Alle karakters zijn gekozen. De ronde begint nu");
+		// TODO: ronde starten
+		return;
+	}
 	currentState_ = GameState::ChooseCharacter;
 	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
 	promptForCharacterCard();

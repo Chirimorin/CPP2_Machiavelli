@@ -29,9 +29,11 @@ public:
 	void addCharacterCard(std::unique_ptr<KarakterKaart> characterCard);
 
 	std::string getPlayerInfo();
-	std::string getCharacterCards();
-	std::string getBuildCards();
-	std::string getGold();
+	std::string getCharacterCardInfo();
+	std::string getBuildCardInfo();
+	std::string getGoldInfo();
+
+	int getCharacterCardCount() { return karakterKaarten_.size(); }
 
 	//std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
 	//std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
