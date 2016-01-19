@@ -2,7 +2,9 @@
 class KarakterKaart
 {
 public:
-	KarakterKaart() {};
+	KarakterKaart() {}
+
+	int getNumber() { return nummer_; }
 	KarakterKaart(int nummer, std::string naam) : nummer_{ nummer }, naam_{ naam } {};
 	~KarakterKaart() {};
 

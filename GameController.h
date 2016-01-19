@@ -40,6 +40,7 @@ private:
 	std::map<std::shared_ptr<Player>, std::shared_ptr<Socket>> spelers_;
 	std::shared_ptr<Player> koning_;
 	std::shared_ptr<Player> currentPlayer_;
+	int currentCharacter_ = 1;
 	int goudstukken_ = 30;
 	bool cheat_ = false;
 
@@ -48,10 +49,14 @@ private:
 	bool startGame();
 	void nextPlayer();
 	void loadCharacterCards();
+
 	void distributeCharacterCards();
 	void promptForCharacterCard();
 	void getCharacterCard(std::string name);
 	void removeCharacterCard(std::string name);
 	void cheatDistributeCharacterCards();
+
+	void startRound();
+	void newTurn();
 	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 };
