@@ -62,6 +62,26 @@ std::vector<std::unique_ptr<KarakterKaart>> Player::getAllCharacterCards()
 	return result;
 }
 
+bool Player::hasCharacterCard(int number)
+{
+	for (unique_ptr<KarakterKaart> & kaart : karakterKaarten_) {
+		if (kaart->getNumber() == number)
+			return true;
+	}
+
+	return false;
+}
+
+std::string Player::getCharacterInfo(int number)
+{
+	for (unique_ptr<KarakterKaart> & kaart : karakterKaarten_) {
+		if (kaart->getNumber() == number)
+			return kaart->getInfo();
+	}
+
+	return "SPELER HEEFT CHARACTER " + std::to_string(number) + " NIET!";
+}
+
 //vector<unique_ptr<KarakterKaart>> Player::addCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten)
 //{
 //	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten);

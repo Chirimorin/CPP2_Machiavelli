@@ -61,6 +61,11 @@ bool GameController::handleCommand(ClientCommand& command)
 	else if (currentState_ == GameState::PlayTurn &&
 		     currentPlayer_ == player)
 	{
+		if (command.get_cmd() == "end turn")
+		{
+			nextPlayer();
+			return true;
+		}
 		// TODO: handle command voor de beurt van een speler
 	}
 
@@ -117,29 +122,53 @@ bool GameController::startGame()
 	koning_ = it->first;
 
 	// Verdeel karakterkaarten
-	if (cheat_) {
-		cheatDistributeCharacterCards();
-	}
-	else {
-		distributeCharacterCards();
-	}
+	distributeCharacterCards();
 
 	return true;
 }
 
 void GameController::nextPlayer()
 {
-	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	if (currentState_ == GameState::ChooseCharacter ||
+		currentState_ == GameState::RemoveCharacter)
 	{
-		return p.first == currentPlayer_;
-	});
+		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+		{
+			return p.first == currentPlayer_;
+		});
 
-	++it;
+		++it;
 
-	if (it == spelers_.end())
-		it = spelers_.begin();
+		if (it == spelers_.end())
+			it = spelers_.begin();
 
-	currentPlayer_ = it->first;
+		currentPlayer_ = it->first;
+	}
+	else
+	{
+		++currentCharacter_;
+		if (currentCharacter_ > 8)
+		{
+			messageAllPlayers("Alle characters zijn aan de beurt geweest.");
+			distributeCharacterCards();
+			return;
+		}
+		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+		{
+			return p.first->hasCharacterCard(currentCharacter_);
+		});
+
+		if (it == spelers_.end())
+		{
+			nextPlayer();
+		}
+		else
+		{
+			currentPlayer_ = it->first;
+			newTurn();
+		}
+	}
+		
 }
 
 void GameController::loadCharacterCards()
@@ -161,6 +190,12 @@ void GameController::loadCharacterCards()
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)
 void GameController::distributeCharacterCards()
 {
+	if (cheat_)
+	{
+		cheatDistributeCharacterCards();
+		return;
+	}
+
 	currentState_ = GameState::ChooseCharacter;
 
 	for (std::unique_ptr<KarakterKaart>& kaart : discardedKarakterKaarten_)
@@ -227,9 +262,8 @@ void GameController::getCharacterCard(std::string name)
 
 	if (karakterKaarten_.size() == 1)
 	{
-		currentState_ = GameState::PlayTurn;
 		messageAllPlayers("Alle karakters zijn gekozen. De ronde begint nu");
-		// TODO: ronde starten
+		startRound();
 		return;
 	}
 	if (karakterKaarten_.size() == 6)
@@ -286,9 +320,23 @@ void GameController::cheatDistributeCharacterCards()
 
 		messageAllPlayers("Karakterkaarten zijn automatisch verdeeld");
 
-		currentState_ = GameState::PlayTurn;
-		//TODO start turn
+		startRound();
 	}
+}
+
+void GameController::startRound()
+{
+	currentState_ = GameState::PlayTurn;
+	currentCharacter_ = 0;
+	nextPlayer();
+}
+
+void GameController::newTurn()
+{
+	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
+	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
+
+	// TODO: info over mogelijkheden laten zien
 }
 
 void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player)
