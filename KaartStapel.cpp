@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "KaartStapel.h"
+#include "Random.h"
 
 KaartStapel::KaartStapel()
 {
@@ -15,7 +16,7 @@ KaartStapel::KaartStapel()
 		}
 	}
 
-	std::random_shuffle(stapel_.begin(), stapel_.end());
+	std::shuffle(stapel_.begin(), stapel_.end(), Random::getEngine());
 
 	std::cout << stapel_.size() << " kaarten ingeladen.\n";
 }

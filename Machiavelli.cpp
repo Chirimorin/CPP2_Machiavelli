@@ -2,19 +2,20 @@
 //
 
 #include "stdafx.h"
-#include "GameController.h"
-
 using namespace std;
 
+namespace machiavelli {
+	const int tcp_port{ 1080 };
+	extern const string prompt; // zie GameController.cpp
+}
+
+#include "GameController.h"
 #include "Socket.h"
 #include "Sync_queue.h"
 #include "ClientCommand.h"
 #include "Player.hpp"
 
-namespace machiavelli {
-	const int tcp_port{ 1080 };
-	const string prompt{ "machiavelli> " };
-}
+
 
 static Sync_queue<ClientCommand> queue;
 
@@ -28,9 +29,8 @@ void consume_command() // runs in its own thread
 			try {
 				if (!GameController::getInstance().handleCommand(command))
 				{
-					*client << "Commando '" << command.get_cmd() << "' wordt niet herkent.\r\n";
+					GameController::getInstance().messagePlayer(player, "Commando '" + command.get_cmd() + "' wordt niet herkent.");
 				}
-				*client << machiavelli::prompt;
 			}
 			catch (const exception& ex) {
 				cerr << "*** exception in consumer thread for player " << player->get_name() << ": " << ex.what() << '\n';

@@ -9,6 +9,8 @@ public:
 	bool IsValid() const { return isValid_; };
 	std::string getName() { return naam_; };
 
+	std::string getInfo() { return getColorString() + naam_ + "\33[40m (" + std::to_string(prijs_) + ')'; }
+
 	friend std::istream& operator>>(std::istream& is, BouwKaart& kaart);
 private:
 	std::string naam_ = "";
@@ -16,6 +18,8 @@ private:
 	std::string kleur_ = "";
 
 	bool isValid_ = false;
+
+	std::string getColorString();
 };
 
 std::istream& operator>>(std::istream& is, BouwKaart& kaart);
