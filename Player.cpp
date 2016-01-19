@@ -55,6 +55,13 @@ std::string Player::getGoldInfo()
 	return "Je hebt momenteel " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
 }
 
+std::vector<std::unique_ptr<KarakterKaart>> Player::getAllCharacterCards()
+{
+	std::vector<std::unique_ptr<KarakterKaart>> result = std::move(karakterKaarten_);
+	karakterKaarten_.clear();
+	return result;
+}
+
 //vector<unique_ptr<KarakterKaart>> Player::addCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten)
 //{
 //	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten);

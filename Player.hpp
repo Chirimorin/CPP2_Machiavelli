@@ -34,6 +34,7 @@ public:
 	std::string getGoldInfo();
 
 	int getCharacterCardCount() { return karakterKaarten_.size(); }
+	std::vector<std::unique_ptr<KarakterKaart>> getAllCharacterCards();
 
 	//std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
 	//std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);

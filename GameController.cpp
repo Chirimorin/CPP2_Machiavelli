@@ -162,7 +162,19 @@ void GameController::distributeCharacterCards()
 {
 	currentState_ = GameState::ChooseCharacter;
 
-	// TODO: alle characterkaarten terug pakken van de spelers
+	for (std::unique_ptr<KarakterKaart>& kaart : discardedKarakterKaarten_)
+	{
+		karakterKaarten_.push_back(std::move(kaart));
+	}
+	discardedKarakterKaarten_.clear();
+
+	for (std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> pair : spelers_)
+	{
+		for (std::unique_ptr<KarakterKaart>& kaart : pair.first->getAllCharacterCards())
+		{
+			karakterKaarten_.push_back(std::move(kaart));
+		}
+	}
 
 	// Schud de karakterkaarten
 	std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
@@ -222,7 +234,7 @@ void GameController::getCharacterCard(std::string name)
 	if (karakterKaarten_.size() == 6)
 	{
 		nextPlayer();
-		messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart weggooien.");
+		messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
 		promptForCharacterCard();
 		return;
 	}
