@@ -46,6 +46,10 @@ public:
 	//void viewGold();
 	//void viewAllPlayerInfo();
 
+	std::string addGold(int gold);
+	void setHasChosenGoldOrBuidCard(bool hasChosenGoldOrBuidCard) { hasChosenGoldOrBuidCard_ = hasChosenGoldOrBuidCard;  }
+	bool hasChosenGoldOrBuidCard() { return hasChosenGoldOrBuidCard_; }
+
 private:
 	std::string name;
 	int goudstukken_ = 0;
@@ -53,6 +57,9 @@ private:
 	std::vector<std::unique_ptr<BouwKaart>> bouwKaarten_;
 
 	//std::unique_ptr<KarakterKaart> chooseCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
+
+	bool hasChosenGoldOrBuidCard_ = false;
+
 };
 
 #endif /* Player_hpp */

@@ -82,6 +82,7 @@ std::string Player::getCharacterInfo(int number)
 	return "SPELER HEEFT CHARACTER " + std::to_string(number) + " NIET!";
 }
 
+
 //vector<unique_ptr<KarakterKaart>> Player::addCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten)
 //{
 //	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten);
@@ -146,3 +147,9 @@ std::string Player::getCharacterInfo(int number)
 //	viewBuildCards(client);
 //	viewGold(client);
 //}
+
+std::string Player::addGold(int gold)
+{ 
+	goudstukken_ += gold; 
+	return "Je hebt nu " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
+}
