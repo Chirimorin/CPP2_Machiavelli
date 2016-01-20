@@ -383,6 +383,7 @@ void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<Karakter
 void GameController::addGold()
 {
 	goudstukken_ -= 2;
+	messageAllPlayers(currentPlayer_->get_name() + " pakt 2 goud.");
 	messagePlayer(currentPlayer_, currentPlayer_->addGold(2));
 
 	currentState_ = GameState::PlayTurn;
@@ -435,6 +436,7 @@ void GameController::getNewBuildCard(std::string name)
 		}
 		mogelijkeNieuweBouwkaarten_.clear();
 
+		messageAllPlayers(currentPlayer_->get_name() + " pakt een bouwkaart.");
 		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
 
 		promptPlayTurn();
