@@ -196,3 +196,26 @@ std::string Player::getGoldForColor(std::string color)
 
 	return "Je hebt " + std::to_string(numGold) + " goud gekregen voor je gebouwen die " + color + " zijn.\r\n" + getGoldInfo();
 }
+
+bool Player::hasEightOrMoreBuildings()
+{
+	if (gebouwen_.size() > 7) {
+		return true;
+	}
+	return false;
+}
+
+int Player::getScore()
+{
+	int score = 0;
+
+	// Alle punten voor de gebouwen in zijn stad
+	for (auto iterator = gebouwen_.begin(); iterator != gebouwen_.end(); ++iterator) {
+		score += (*iterator)->getPrice();
+	}
+
+	// TODO: 3 punten als de speler gebouwen van alle 5 kleuren bezit
+
+
+	return score;
+}

@@ -43,6 +43,9 @@ public:
 	std::string buildCard(std::string card);
 
 	std::string newTurn(int currentCharacter);
+
+	bool hasEightOrMoreBuildings();
+	int getScore();
 private:
 	std::string name;
 	int goudstukken_ = 0;

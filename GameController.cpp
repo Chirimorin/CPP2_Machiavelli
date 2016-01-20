@@ -79,6 +79,10 @@ bool GameController::handleCommand(ClientCommand& command)
 	
 		if (command.get_cmd() == "end turn")
 		{
+			// Check of de speler als eerste 8 gebouwen heeft
+			if (winnaar_ == nullptr && currentPlayer_->hasEightOrMoreBuildings()) {
+				winnaar_ = currentPlayer_;
+			}
 			nextPlayer();
 			return true;
 		}
@@ -123,6 +127,7 @@ bool GameController::startGame()
 {
 	messageAllPlayers("\33[2JHet spel begint nu");
 
+	winnaar_ = nullptr;
 	goudstukken_ = 30;
 	kaartStapel_ = std::make_unique<KaartStapel>();
 	loadCharacterCards();
@@ -354,6 +359,35 @@ void GameController::cheatDistributeCharacterCards()
 
 void GameController::startRound()
 {
+	// Checken of het spel geëindigd is
+	if (winnaar_ != nullptr) {
+
+		std::map<int, std::shared_ptr<Player>> scores;
+
+		for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
+			int score = iterator->first->getScore();
+			if (iterator->first == winnaar_) {
+				// 4 punten voor de speler die als eerste 8 gebouwen bezit
+				score += 4;
+			}
+			else if (iterator->first->hasEightOrMoreBuildings()) {
+				// 2 punten voor elke speler die na de laatste ronde ook 8 gebouwen heeft
+				score += 2;
+			}
+
+			scores[score] = iterator->first;
+		}
+
+		// Toon scores
+		/*std::map<std::string, std::string>::reverse_iterator iterator;
+		for (iterator = scores.rbegin(); iterator != scores.rend(); ++iterator)
+		{
+			//messageAllPlayers(iterator->second + ": " + iterator->first);
+		}*/
+		
+		messageAllPlayers("Speler " + winnaar_->get_name() + " heeft gewonnen!!");
+	}
+
 	currentState_ = GameState::PlayTurn;
 	currentCharacter_ = 0;
 	nextPlayer();
