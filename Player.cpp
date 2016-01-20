@@ -87,3 +87,13 @@ std::string Player::addGold(int gold)
 	goudstukken_ += gold; 
 	return "Je hebt nu " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
 }
+
+std::string Player::useAbility()
+{
+	return "Je karaktereigenschap gebruiken is nog niet mogelijk";
+}
+
+std::string Player::buildCard(std::string card)
+{
+	return "Bouwen is nog niet mogelijk";
+}

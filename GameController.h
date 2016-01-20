@@ -73,4 +73,6 @@ private:
 	void getNewBuildCard(std::string name);
 	
 	void promptPlayTurn();
+	void buildCard(std::string card);
+	void useAbility();
 };

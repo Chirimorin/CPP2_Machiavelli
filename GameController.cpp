@@ -84,14 +84,15 @@ bool GameController::handleCommand(ClientCommand& command)
 		}
 		// TODO: handle command voor de beurt van een speler
 		
-		if (command.get_cmd() == "bouwen")
+		if (command.get_cmd().length() > 5 &&
+			command.get_cmd().substr(0,5) == "bouw ")
 		{
-			// TODO: boukaart neerleggen
+			buildCard(command.get_cmd().substr(5));
 			return true;
 		}
-		if (command.get_cmd() == "eigenschap")
+		if (command.get_cmd() == "karaktereigenschap")
 		{
-			// TODO: gebruik karaktereigenschap
+			useAbility();
 			return true;
 		}
 	}
@@ -386,7 +387,6 @@ void GameController::addGold()
 	messageAllPlayers(currentPlayer_->get_name() + " pakt 2 goud.");
 	messagePlayer(currentPlayer_, currentPlayer_->addGold(2));
 
-	currentState_ = GameState::PlayTurn;
 	promptPlayTurn();
 }
 
@@ -394,7 +394,7 @@ void GameController::chooseNewBuildCard()
 {
 	currentState_ = GameState::PickBuildCard;
 
-	// TODO: meer bouwkaarten voor de bouwmeester
+	// TODO: bouwmeester krijgt de 2 kaarten meteen
 	for (int i = 0; i < 2; ++i)
 	{
 		mogelijkeNieuweBouwkaarten_.push_back(std::move(kaartStapel_->getBuildCard()));
@@ -446,6 +446,15 @@ void GameController::getNewBuildCard(std::string name)
 void GameController::promptPlayTurn()
 {
 	currentState_ = GameState::PlayTurn;
-	messagePlayer(currentPlayer_, "Dit is nog niet af...");
-	// TODO: play turn prompt
+	messagePlayer(currentPlayer_, "Kies een optie:\r\n( bouw [kaart] | karaktereigenschap | end turn ]");
+}
+
+void GameController::buildCard(std::string card)
+{
+	messagePlayer(currentPlayer_, currentPlayer_->buildCard(card));
+}
+
+void GameController::useAbility()
+{
+	messagePlayer(currentPlayer_, currentPlayer_->useAbility());
 }
