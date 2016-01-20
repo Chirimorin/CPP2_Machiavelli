@@ -46,27 +46,55 @@ bool GameController::handleCommand(ClientCommand& command)
 			}
 		}
 	}
-	else if (currentState_ == GameState::ChooseCharacter &&
-			 currentPlayer_ == player)
+	else if (currentPlayer_ == player)
 	{
-		getCharacterCard(command.get_cmd());
-		return true;
-	}
-	else if (currentState_ == GameState::RemoveCharacter &&
-		     currentPlayer_ == player)
-	{
-		removeCharacterCard(command.get_cmd());
-		return true;
-	}
-	else if (currentState_ == GameState::PlayTurn &&
-		     currentPlayer_ == player)
-	{
+		if (currentState_ == GameState::ChooseCharacter)
+		{
+			getCharacterCard(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::RemoveCharacter)
+		{
+			removeCharacterCard(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::ChooseGoldOrCard)
+		{
+			if (command.get_cmd() == "goud")
+			{
+				addGold();
+				return true;
+			}
+			if (command.get_cmd() == "bouwkaart")
+			{
+				chooseNewBuildCard();
+				return true;
+			}
+		}
+		if (currentState_ == GameState::PickBuildCard)
+		{
+			getNewBuildCard(command.get_cmd());
+			return true;
+		}
+	
 		if (command.get_cmd() == "end turn")
 		{
 			nextPlayer();
 			return true;
 		}
 		// TODO: handle command voor de beurt van een speler
+		
+		if (command.get_cmd().length() > 5 &&
+			command.get_cmd().substr(0,5) == "bouw ")
+		{
+			buildCard(command.get_cmd().substr(5));
+			return true;
+		}
+		if (command.get_cmd() == "karaktereigenschap")
+		{
+			useAbility();
+			return true;
+		}
 	}
 
 	return false;
@@ -190,20 +218,14 @@ void GameController::loadCharacterCards()
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)
 void GameController::distributeCharacterCards()
 {
-	if (cheat_)
-	{
-		cheatDistributeCharacterCards();
-		return;
-	}
-
-	currentState_ = GameState::ChooseCharacter;
-
+	// Pak de afgelegde karakterkaarten terug
 	for (std::unique_ptr<KarakterKaart>& kaart : discardedKarakterKaarten_)
 	{
 		karakterKaarten_.push_back(std::move(kaart));
 	}
 	discardedKarakterKaarten_.clear();
 
+	// Pak de gekozen karakterkaarten terug
 	for (std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> pair : spelers_)
 	{
 		for (std::unique_ptr<KarakterKaart>& kaart : pair.first->getAllCharacterCards())
@@ -214,7 +236,15 @@ void GameController::distributeCharacterCards()
 
 	// Schud de karakterkaarten
 	std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
-	
+
+	if (cheat_)
+	{
+		cheatDistributeCharacterCards();
+		return;
+	}
+
+	currentState_ = GameState::ChooseCharacter;
+
 	// Bepaal de koning
 	messageAllPlayers(koning_->get_name() + " is de koning deze ronde.");
 	currentPlayer_ = koning_;
@@ -306,8 +336,6 @@ void GameController::removeCharacterCard(std::string name)
 void GameController::cheatDistributeCharacterCards()
 {
 	if (spelers_.size() == 2) {
-		std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
-
 		// Verdeel karakaterkaarten
 		for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
 			for (int i = 0; i < 2; ++i)
@@ -333,10 +361,17 @@ void GameController::startRound()
 
 void GameController::newTurn()
 {
+	currentState_ = GameState::ChooseGoldOrCard;
 	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
+	messagePlayer(currentPlayer_, currentPlayer_->newTurn(currentCharacter_));
 
-	// TODO: info over mogelijkheden laten zien
+	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | eigenschap]");
+
+	// TODO: zorgen dat ze speler meerdere acties kan doen tijdens zijn beurt in plaats van 1:
+	// - 2 goudstukken of bouwkaart
+	// - bouwen
+	// - karakter eigenschap gebruiken
 }
 
 void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player)
@@ -345,4 +380,99 @@ void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<Karakter
 	std::unique_ptr<KarakterKaart> karakterkaart = std::move(currentKarakterKaarten.at(index));
 	player->addCharacterCard(std::move(karakterkaart));
 	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
+}
+
+void GameController::addGold()
+{
+	goudstukken_ -= 2;
+	messageAllPlayers(currentPlayer_->get_name() + " pakt 2 goud.");
+	messagePlayer(currentPlayer_, currentPlayer_->addGold(2));
+
+	promptPlayTurn();
+}
+
+void GameController::chooseNewBuildCard()
+{
+	currentState_ = GameState::PickBuildCard;
+
+	for (int i = 0; i < 2; ++i)
+	{
+		mogelijkeNieuweBouwkaarten_.push_back(std::move(kaartStapel_->getBuildCard()));
+	}
+
+	promptForGetNewBuildCard();
+}
+
+void GameController::promptForGetNewBuildCard()
+{
+	if (currentCharacter_ == 7) // bouwmeester krijgt beide kaarten
+	{
+		std::string result = "Je pakt de volgende bouwkaarten:\r\n";
+		for (auto iter = mogelijkeNieuweBouwkaarten_.begin(); iter < mogelijkeNieuweBouwkaarten_.end(); ++iter)
+		{
+			result += (*iter)->getInfo() + ", ";
+			currentPlayer_->addBuildCard(std::move(*iter));
+		}
+		mogelijkeNieuweBouwkaarten_.clear();
+
+		messageAllPlayers(currentPlayer_->get_name() + " pakt twee bouwkaarten.");
+		messagePlayer(currentPlayer_, result);
+		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
+
+		promptPlayTurn();
+		return;
+	}
+
+	std::string result = "Kies een van de volgende bouwkaarten:\r\n";
+	for (auto it = mogelijkeNieuweBouwkaarten_.begin(); it < mogelijkeNieuweBouwkaarten_.end(); ++it)
+	{
+		result += (*it)->getInfo() + ", ";
+	}
+	messagePlayer(currentPlayer_, result);
+}
+
+void GameController::getNewBuildCard(std::string name)
+{
+	auto it = std::find_if(mogelijkeNieuweBouwkaarten_.begin(), mogelijkeNieuweBouwkaarten_.end(), [&name](std::unique_ptr<BouwKaart>& k)
+	{
+		return k->getName() == name;
+	});
+
+	if (it == mogelijkeNieuweBouwkaarten_.end())
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldige bouwkaart.");
+		promptForGetNewBuildCard();
+	}
+	else
+	{
+		currentPlayer_->addBuildCard(std::move(*it));
+		mogelijkeNieuweBouwkaarten_.erase(it);
+
+		for (auto iter = mogelijkeNieuweBouwkaarten_.begin(); iter < mogelijkeNieuweBouwkaarten_.end(); ++iter)
+		{
+			kaartStapel_->addBuildCard(std::move(*iter));
+		}
+		mogelijkeNieuweBouwkaarten_.clear();
+
+		messageAllPlayers(currentPlayer_->get_name() + " pakt een bouwkaart.");
+		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
+
+		promptPlayTurn();
+	}
+}
+
+void GameController::promptPlayTurn()
+{
+	currentState_ = GameState::PlayTurn;
+	messagePlayer(currentPlayer_, "Kies een optie:\r\n( bouw [kaart] | karaktereigenschap | end turn ]");
+}
+
+void GameController::buildCard(std::string card)
+{
+	messagePlayer(currentPlayer_, currentPlayer_->buildCard(card));
+}
+
+void GameController::useAbility()
+{
+	messagePlayer(currentPlayer_, currentPlayer_->useAbility(currentCharacter_));
 }

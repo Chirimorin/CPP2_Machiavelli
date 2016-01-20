@@ -21,7 +21,7 @@ void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard) {
 
 std::string Player::getPlayerInfo()
 {
-	return getCharacterCardInfo() + "\r\n" + getBuildCardInfo() + "\r\n" + getGoldInfo();
+	return getCharacterCardInfo() + "\r\n" + getBuildingInfo() + "\r\n" + getBuildCardInfo() + "\r\n" + getGoldInfo();
 }
 
 std::string Player::getCharacterCardInfo()
@@ -31,6 +31,19 @@ std::string Player::getCharacterCardInfo()
 	for (unique_ptr<KarakterKaart>& kaart : karakterKaarten_) {
 		result += kaart->getInfo();
 		if (&kaart != &karakterKaarten_.back())
+			result += ", ";
+	}
+
+	return result;
+}
+
+std::string Player::getBuildingInfo()
+{
+	std::string result = "Je hebt de volgende gebouwen: \r\n";
+
+	for (unique_ptr<BouwKaart> & kaart : gebouwen_) {
+		result += kaart->getInfo();
+		if (&kaart != &gebouwen_.back())
 			result += ", ";
 	}
 
@@ -82,67 +95,104 @@ std::string Player::getCharacterInfo(int number)
 	return "SPELER HEEFT CHARACTER " + std::to_string(number) + " NIET!";
 }
 
-//vector<unique_ptr<KarakterKaart>> Player::addCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten)
-//{
-//	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten);
-//	karakterKaarten_.push_back(move(karakterkaart));
-//	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
-//	return move(currentKarakterKaarten);
-//}
-//
-//vector<unique_ptr<KarakterKaart>> Player::discardCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten)
-//{
-//	unique_ptr<KarakterKaart> karakterkaart = chooseCharacterCard(currentKarakterKaarten);
-//	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
-//	return move(currentKarakterKaarten);
-//}
-//
-//unique_ptr<KarakterKaart> Player::chooseCharacterCard(vector<unique_ptr<KarakterKaart>> &currentKarakterKaarten)
-//{
-//	*client << "De karakterkaarten zijn:\r\n";
-//	for (unique_ptr<KarakterKaart> & kaart : currentKarakterKaarten) {
-//		*client << kaart->getInfo();
-//		&kaart != &currentKarakterKaarten.back() ? *client << ", " : *client << "\r\n";
-//	}
-//	*client << "Welke karakterkaart wil je hebben?\r\n";
-//
-//	string kaartNaam = client->readline();
-//	*client << "Ingetypt: " << kaartNaam << "\r\n"; // MOET WEG
-//
-//	auto it = find_if(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), [kaartNaam](unique_ptr<KarakterKaart>& kaart) {return kaart->getName() == kaartNaam; });
-//	cout << "Ingetypt: " << kaartNaam << "\r\n"; // MOET WEG
-//
-//	while (it == currentKarakterKaarten.end()) {
-//		*client << "De ingevoerde karakterkaart wordt niet herkent. Probeer het opnieuw.\r\n";
-//		kaartNaam = client->readline();
-//		it = find_if(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), [kaartNaam](unique_ptr<KarakterKaart>& kaart) {return kaart->getName() == kaartNaam; });
-//	}
-//
-//	return move(*it);
-//}
-//
-//void Player::viewCharacterCards(std::shared_ptr<Socket> &client) {
-//	*client << "Je hebt de volgende karakterkaarten: \r\n";
-//	for (unique_ptr<KarakterKaart> & kaart : karakterKaarten_) {
-//		*client << kaart->getName();
-//		&kaart != &karakterKaarten_.back() ? *client << ", " : *client << ".\r\n";
-//	}
-//}
-//
-//void Player::viewBuildCards(std::shared_ptr<Socket> &client) {
-//	*client << "Je hebt de volgende bouwkaarten: \r\n";
-//	for (unique_ptr<BouwKaart> & kaart : bouwKaarten_) {
-//		*client << kaart->getInfo();
-//		&kaart != &bouwKaarten_.back() ? *client << ", " : *client << ".\r\n";
-//	}
-//}
-//
-//void Player::viewGold(std::shared_ptr<Socket> &client) {
-//	*client << "Je hebt op dit moment " << goudstukken_ << " goudstuk(ken).\r\n";
-//}
-//
-//void Player::viewAllPlayerInfo(std::shared_ptr<Socket> &client) {
-//	viewCharacterCards(client);
-//	viewBuildCards(client);
-//	viewGold(client);
-//}
+std::string Player::addGold(int gold)
+{ 
+	goudstukken_ += gold; 
+	return "Je hebt nu " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
+}
+
+std::string Player::useAbility(int currentCharacter)
+{
+	if (usedAbility_)
+	{
+		return "Je hebt je karaktereigenschap al gebruikt deze beurt.";
+	}
+	usedAbility_ = true;
+
+	switch (currentCharacter)
+	{
+	case 1: // Moordenaar
+		// TODO: karakter vermoorden
+		break;
+	case 2: // Dief
+		// TODO: karakter bestelen
+		break;
+	case 3: // Magier
+		// TODO: handkaarten omruilen met speler of gelijk aantal omruilen met de bank
+		break;
+	case 4: // Koning
+		return getGoldForColor("geel");
+	case 5: // Prediker
+		return getGoldForColor("blauw");
+	case 6: // Koopman
+		return getGoldForColor("groen");
+	case 7: // Bouwmeester
+		// Bouwmeester heeft geen actieve ability
+		return "De bouwmeester heeft geen karaktereigenschap om te gebruiken.";
+	case 8: // Condotierre
+		// TODO: keuze om gebouw te vernietigen
+		return getGoldForColor("rood");
+	}
+
+	return "Je karaktereigenschap gebruiken is nog niet mogelijk";
+}
+
+std::string Player::buildCard(std::string card)
+{
+	if (maxBuilds_ <= 0)
+	{
+		return "Je mag deze beurt niet meer bouwen.";
+	}
+
+	auto it = std::find_if(bouwKaarten_.begin(), bouwKaarten_.end(), [&card](std::unique_ptr<BouwKaart>& b)
+	{
+		return b->getName() == card;
+	});
+
+	if (it == bouwKaarten_.end())
+	{
+		return "'" + card + "' is geen geldige bouwkaart.";
+	}
+	
+	if (goudstukken_ >= (*it)->getPrice())
+	{
+		GameController::getInstance().messageAllPlayers(name + " bouwt een " + card + " voor " + std::to_string((*it)->getPrice()) + " goud.");
+		goudstukken_ -= (*it)->getPrice();
+		gebouwen_.push_back(std::move(*it));
+		bouwKaarten_.erase(it);
+		--maxBuilds_;
+
+		return getGoldInfo();
+	}
+
+	return "Je hebt niet genoeg goud om " + card + " te bouwen.";
+}
+
+std::string Player::newTurn(int currentCharacter)
+{
+	maxBuilds_ = 1;
+	usedAbility_ = false;
+
+	switch (currentCharacter)
+	{
+	case 6: // koopman
+		goudstukken_++;
+		return "Als koopman heb je 1 extra goud gekregen.\r\n" + getGoldInfo();
+	case 7: // bouwmeester
+		maxBuilds_ += 2;
+		break;
+	}
+
+	return "Je krijgt geen extra goud deze beurt.";
+}
+
+std::string Player::getGoldForColor(std::string color)
+{
+	int numGold = std::count_if(gebouwen_.begin(), gebouwen_.end(), [color](std::unique_ptr<BouwKaart>& g)
+	{
+		return g->getColor() == color;
+	});
+	goudstukken_ += numGold;
+
+	return "Je hebt " + std::to_string(numGold) + " goud gekregen voor je gebouwen die " + color + " zijn.\r\n" + getGoldInfo();
+}

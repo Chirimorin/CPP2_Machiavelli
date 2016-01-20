@@ -27,3 +27,7 @@ std::unique_ptr<BouwKaart> KaartStapel::getBuildCard()
 	stapel_.pop_front();
 	return bouwkaart;
 }
+
+void KaartStapel::addBuildCard(std::unique_ptr<BouwKaart> bouwkaart) {
+	stapel_.push_back(move(bouwkaart));
+}

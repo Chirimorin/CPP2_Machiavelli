@@ -30,29 +30,30 @@ public:
 
 	std::string getPlayerInfo();
 	std::string getCharacterCardInfo();
+	std::string getBuildingInfo();
 	std::string getBuildCardInfo();
 	std::string getGoldInfo();
 
-	int getCharacterCardCount() { return karakterKaarten_.size(); }
 	std::vector<std::unique_ptr<KarakterKaart>> getAllCharacterCards();
 	bool hasCharacterCard(int number);
 	std::string getCharacterInfo(int number);
+	std::string addGold(int gold);
 
-	//std::vector<std::unique_ptr<KarakterKaart>> addCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
-	//std::vector<std::unique_ptr<KarakterKaart>> discardCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
-	//
-	//void viewCharacterCards();
-	//void viewBuildCards();
-	//void viewGold();
-	//void viewAllPlayerInfo();
+	std::string useAbility(int currentCharacter);
+	std::string buildCard(std::string card);
 
+	std::string newTurn(int currentCharacter);
 private:
 	std::string name;
 	int goudstukken_ = 0;
 	std::vector<std::unique_ptr<KarakterKaart>> karakterKaarten_;
 	std::vector<std::unique_ptr<BouwKaart>> bouwKaarten_;
+	std::vector<std::unique_ptr<BouwKaart>> gebouwen_;
 
-	//std::unique_ptr<KarakterKaart> chooseCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten);
+	int maxBuilds_ = 1;
+	bool usedAbility_ = false;
+
+	std::string getGoldForColor(std::string color);
 };
 
 #endif /* Player_hpp */
