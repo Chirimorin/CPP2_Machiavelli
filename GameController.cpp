@@ -46,45 +46,44 @@ bool GameController::handleCommand(ClientCommand& command)
 			}
 		}
 	}
-	else if (currentState_ == GameState::ChooseCharacter &&
-			 currentPlayer_ == player)
+	else if (currentPlayer_ == player)
 	{
-		getCharacterCard(command.get_cmd());
-		return true;
-	}
-	else if (currentState_ == GameState::RemoveCharacter &&
-		     currentPlayer_ == player)
-	{
-		removeCharacterCard(command.get_cmd());
-		return true;
-	}
-	else if (currentState_ == GameState::PlayTurn &&
-		     currentPlayer_ == player)
-	{
+		if (currentState_ == GameState::ChooseCharacter)
+		{
+			getCharacterCard(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::RemoveCharacter)
+		{
+			removeCharacterCard(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::ChooseGoldOrCard)
+		{
+			if (command.get_cmd() == "goud")
+			{
+				addGold();
+				return true;
+			}
+			if (command.get_cmd() == "bouwkaart")
+			{
+				chooseNewBuildCard();
+				return true;
+			}
+		}
+		if (currentState_ == GameState::PickBuildCard)
+		{
+			getNewBuildCard(command.get_cmd());
+			return true;
+		}
+	
 		if (command.get_cmd() == "end turn")
 		{
 			nextPlayer();
 			return true;
 		}
 		// TODO: handle command voor de beurt van een speler
-		if (command.get_cmd() == "goud")
-		{
-			if (currentPlayer_->hasChosenGoldOrBuidCard()) {
-				return false;
-			}
-			addGold();
-			currentPlayer_->setHasChosenGoldOrBuidCard(true);
-			return true;
-		}
-		if (command.get_cmd() == "bouwkaart")
-		{
-			if (currentPlayer_->hasChosenGoldOrBuidCard()) {
-				return false;
-			}
-			chooseNewBuildCard();
-			currentPlayer_->setHasChosenGoldOrBuidCard(true);
-			return true;
-		}
+		
 		if (command.get_cmd() == "bouwen")
 		{
 			// TODO: boukaart neerleggen
@@ -95,12 +94,6 @@ bool GameController::handleCommand(ClientCommand& command)
 			// TODO: gebruik karaktereigenschap
 			return true;
 		}
-	}
-	else if (currentState_ == GameState::ChooseNewBuildCard &&
-		currentPlayer_ == player)
-	{
-		getNewBuildCard(command.get_cmd());
-		return true;
 	}
 
 	return false;
@@ -367,11 +360,11 @@ void GameController::startRound()
 
 void GameController::newTurn()
 {
+	currentState_ = GameState::ChooseGoldOrCard;
 	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
 
-	// TODO: info over mogelijkheden laten zien
-	promptForChoiseGoldOrBuildCard();
+	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | eigenschap]");
 
 	// TODO: zorgen dat ze speler meerdere acties kan doen tijdens zijn beurt in plaats van 1:
 	// - 2 goudstukken of bouwkaart
@@ -387,60 +380,70 @@ void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<Karakter
 	currentKarakterKaarten.erase(remove(currentKarakterKaarten.begin(), currentKarakterKaarten.end(), karakterkaart), currentKarakterKaarten.end());
 }
 
-void GameController::promptForChoiseGoldOrBuildCard()
-{
-	// TODO: alleen de mogelijke opties tonen
-
-	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | eigenschap]");
-}
-
 void GameController::addGold()
 {
 	goudstukken_ -= 2;
 	messagePlayer(currentPlayer_, currentPlayer_->addGold(2));
+
+	currentState_ = GameState::PlayTurn;
+	promptPlayTurn();
 }
 
 void GameController::chooseNewBuildCard()
 {
-	currentState_ = GameState::ChooseNewBuildCard;
+	currentState_ = GameState::PickBuildCard;
 
-	nieuweBouwKaart1_ = std::move(kaartStapel_->getBuildCard());
-	nieuweBouwKaart2_ = std::move(kaartStapel_->getBuildCard());
-
-	//nieuweBouwKaart1_ = kaartStapel_->getBuildCard();
-	//nieuweBouwKaart2_ = kaartStapel_->getBuildCard();
+	// TODO: meer bouwkaarten voor de bouwmeester
+	for (int i = 0; i < 2; ++i)
+	{
+		mogelijkeNieuweBouwkaarten_.push_back(std::move(kaartStapel_->getBuildCard()));
+	}
 
 	promptForGetNewBuildCard();
 }
 
 void GameController::promptForGetNewBuildCard()
 {
-	std::string result = "Kies een van de volgende bouwkaarten:\r\n" + nieuweBouwKaart1_->getName() + ", " + nieuweBouwKaart2_->getName();
+	std::string result = "Kies een van de volgende bouwkaarten:\r\n";
+	for (auto it = mogelijkeNieuweBouwkaarten_.begin(); it < mogelijkeNieuweBouwkaarten_.end(); ++it)
+	{
+		result += (*it)->getInfo() + ", ";
+	}
 	messagePlayer(currentPlayer_, result);
 }
 
 void GameController::getNewBuildCard(std::string name)
 {
-	if (name == nieuweBouwKaart1_->getName()) {
-		currentPlayer_->addBuildCard(std::move(nieuweBouwKaart1_));
-		kaartStapel_->addBuildCard(std::move(nieuweBouwKaart2_));
+	auto it = std::find_if(mogelijkeNieuweBouwkaarten_.begin(), mogelijkeNieuweBouwkaarten_.end(), [&name](std::unique_ptr<BouwKaart>& k)
+	{
+		return k->getName() == name;
+	});
 
-		//nieuweBouwKaart1_ = nullptr;
-		//nieuweBouwKaart2_ = nullptr;
-	}
-	else if (name == nieuweBouwKaart2_->getName()) {
-		currentPlayer_->addBuildCard(std::move(nieuweBouwKaart2_));
-		kaartStapel_->addBuildCard(std::move(nieuweBouwKaart1_));
-
-		//nieuweBouwKaart1_ = nullptr;
-		//nieuweBouwKaart2_ = nullptr;
-	}
-	else {
+	if (it == mogelijkeNieuweBouwkaarten_.end())
+	{
 		messagePlayer(currentPlayer_, name + " is geen geldige bouwkaart.");
 		promptForGetNewBuildCard();
-		return;
 	}
+	else
+	{
+		currentPlayer_->addBuildCard(std::move(*it));
+		mogelijkeNieuweBouwkaarten_.erase(it);
 
-	currentPlayer_->getBuildCardInfo();
+		for (auto iter = mogelijkeNieuweBouwkaarten_.begin(); iter < mogelijkeNieuweBouwkaarten_.end(); ++iter)
+		{
+			kaartStapel_->addBuildCard(std::move(*iter));
+		}
+		mogelijkeNieuweBouwkaarten_.clear();
+
+		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
+
+		promptPlayTurn();
+	}
 }
 
+void GameController::promptPlayTurn()
+{
+	currentState_ = GameState::PlayTurn;
+	messagePlayer(currentPlayer_, "Dit is nog niet af...");
+	// TODO: play turn prompt
+}

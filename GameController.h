@@ -14,8 +14,10 @@ enum class GameState
 	NotStarted,
 	ChooseCharacter,
 	RemoveCharacter,
-	PlayTurn,
-	ChooseNewBuildCard
+	NewRound,
+	ChooseGoldOrCard,
+	PickBuildCard,
+	PlayTurn
 };
 
 
@@ -47,9 +49,9 @@ private:
 
 	GameState currentState_ = GameState::NotStarted;
 
-	//std::vector<std::unique_ptr<BouwKaart>> mogelijkeNieuweBouwkaarten_;
-	std::unique_ptr<BouwKaart> nieuweBouwKaart1_;
-	std::unique_ptr<BouwKaart> nieuweBouwKaart2_;
+	std::vector<std::unique_ptr<BouwKaart>> mogelijkeNieuweBouwkaarten_;
+	//std::unique_ptr<BouwKaart> nieuweBouwKaart1_;
+	//std::unique_ptr<BouwKaart> nieuweBouwKaart2_;
 
 	bool startGame();
 	void nextPlayer();
@@ -65,10 +67,10 @@ private:
 	void newTurn();
 	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 
-	void promptForChoiseGoldOrBuildCard();
 	void addGold();
 	void chooseNewBuildCard();
 	void promptForGetNewBuildCard();
 	void getNewBuildCard(std::string name);
 	
+	void promptPlayTurn();
 };

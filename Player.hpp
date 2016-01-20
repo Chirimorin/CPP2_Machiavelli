@@ -33,7 +33,6 @@ public:
 	std::string getBuildCardInfo();
 	std::string getGoldInfo();
 
-	int getCharacterCardCount() { return karakterKaarten_.size(); }
 	std::vector<std::unique_ptr<KarakterKaart>> getAllCharacterCards();
 	bool hasCharacterCard(int number);
 	std::string getCharacterInfo(int number);
