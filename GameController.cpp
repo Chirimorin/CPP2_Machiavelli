@@ -100,6 +100,7 @@ bool GameController::handleCommand(ClientCommand& command)
 		currentPlayer_ == player)
 	{
 		getNewBuildCard(command.get_cmd());
+		return true;
 	}
 
 	return false;
@@ -403,8 +404,11 @@ void GameController::chooseNewBuildCard()
 {
 	currentState_ = GameState::ChooseNewBuildCard;
 
-	nieuweBouwKaart1_ = kaartStapel_->getBuildCard();
-	nieuweBouwKaart2_ = kaartStapel_->getBuildCard();
+	nieuweBouwKaart1_ = std::move(kaartStapel_->getBuildCard());
+	nieuweBouwKaart2_ = std::move(kaartStapel_->getBuildCard());
+
+	//nieuweBouwKaart1_ = kaartStapel_->getBuildCard();
+	//nieuweBouwKaart2_ = kaartStapel_->getBuildCard();
 
 	promptForGetNewBuildCard();
 }
@@ -421,20 +425,22 @@ void GameController::getNewBuildCard(std::string name)
 		currentPlayer_->addBuildCard(std::move(nieuweBouwKaart1_));
 		kaartStapel_->addBuildCard(std::move(nieuweBouwKaart2_));
 
-		nieuweBouwKaart1_ = nullptr;
-		nieuweBouwKaart2_ = nullptr;
+		//nieuweBouwKaart1_ = nullptr;
+		//nieuweBouwKaart2_ = nullptr;
 	}
 	else if (name == nieuweBouwKaart2_->getName()) {
 		currentPlayer_->addBuildCard(std::move(nieuweBouwKaart2_));
 		kaartStapel_->addBuildCard(std::move(nieuweBouwKaart1_));
 
-		nieuweBouwKaart1_ = nullptr;
-		nieuweBouwKaart2_ = nullptr;
+		//nieuweBouwKaart1_ = nullptr;
+		//nieuweBouwKaart2_ = nullptr;
 	}
 	else {
 		messagePlayer(currentPlayer_, name + " is geen geldige bouwkaart.");
 		promptForGetNewBuildCard();
 		return;
 	}
+
+	currentPlayer_->getBuildCardInfo();
 }
 
