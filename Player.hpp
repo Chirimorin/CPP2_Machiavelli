@@ -39,10 +39,10 @@ public:
 	std::string getCharacterInfo(int number);
 	std::string addGold(int gold);
 
-	std::string useAbility();
+	std::string useAbility(int currentCharacter);
 	std::string buildCard(std::string card);
 
-	void newTurn();
+	std::string newTurn(int currentCharacter);
 private:
 	std::string name;
 	int goudstukken_ = 0;
@@ -52,6 +52,8 @@ private:
 
 	int maxBuilds_ = 1;
 	bool usedAbility_ = false;
+
+	std::string getGoldForColor(std::string color);
 };
 
 #endif /* Player_hpp */

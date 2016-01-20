@@ -101,13 +101,38 @@ std::string Player::addGold(int gold)
 	return "Je hebt nu " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
 }
 
-std::string Player::useAbility()
+std::string Player::useAbility(int currentCharacter)
 {
 	if (usedAbility_)
 	{
 		return "Je hebt je karaktereigenschap al gebruikt deze beurt.";
 	}
 	usedAbility_ = true;
+
+	switch (currentCharacter)
+	{
+	case 1: // Moordenaar
+		// TODO: karakter vermoorden
+		break;
+	case 2: // Dief
+		// TODO: karakter bestelen
+		break;
+	case 3: // Magier
+		// TODO: handkaarten omruilen met speler of gelijk aantal omruilen met de bank
+		break;
+	case 4: // Koning
+		return getGoldForColor("geel");
+	case 5: // Prediker
+		return getGoldForColor("blauw");
+	case 6: // Koopman
+		return getGoldForColor("groen");
+	case 7: // Bouwmeester
+		// Bouwmeester heeft geen actieve ability
+		return "De bouwmeester heeft geen karaktereigenschap om te gebruiken.";
+	case 8: // Condotierre
+		// TODO: keuze om gebouw te vernietigen
+		return getGoldForColor("rood");
+	}
 
 	return "Je karaktereigenschap gebruiken is nog niet mogelijk";
 }
@@ -143,8 +168,31 @@ std::string Player::buildCard(std::string card)
 	return "Je hebt niet genoeg goud om " + card + " te bouwen.";
 }
 
-void Player::newTurn()
+std::string Player::newTurn(int currentCharacter)
 {
 	maxBuilds_ = 1;
 	usedAbility_ = false;
+
+	switch (currentCharacter)
+	{
+	case 6: // koopman
+		goudstukken_++;
+		return "Als koopman heb je 1 extra goud gekregen.\r\n" + getGoldInfo();
+	case 7: // bouwmeester
+		maxBuilds_ += 2;
+		break;
+	}
+
+	return "Je krijgt geen extra goud deze beurt.";
+}
+
+std::string Player::getGoldForColor(std::string color)
+{
+	int numGold = std::count_if(gebouwen_.begin(), gebouwen_.end(), [color](std::unique_ptr<BouwKaart>& g)
+	{
+		return g->getColor() == color;
+	});
+	goudstukken_ += numGold;
+
+	return "Je hebt " + std::to_string(numGold) + " goud gekregen voor je gebouwen die " + color + " zijn.\r\n" + getGoldInfo();
 }

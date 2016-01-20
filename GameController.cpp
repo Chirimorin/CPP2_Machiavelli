@@ -362,9 +362,9 @@ void GameController::startRound()
 void GameController::newTurn()
 {
 	currentState_ = GameState::ChooseGoldOrCard;
-	currentPlayer_->newTurn();
 	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
+	messagePlayer(currentPlayer_, currentPlayer_->newTurn(currentCharacter_));
 
 	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | eigenschap]");
 
