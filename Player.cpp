@@ -21,7 +21,7 @@ void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard) {
 
 std::string Player::getPlayerInfo()
 {
-	return getCharacterCardInfo() + "\r\n" + getBuildCardInfo() + "\r\n" + getGoldInfo();
+	return getCharacterCardInfo() + "\r\n" + getBuildingInfo() + "\r\n" + getBuildCardInfo() + "\r\n" + getGoldInfo();
 }
 
 std::string Player::getCharacterCardInfo()
@@ -31,6 +31,19 @@ std::string Player::getCharacterCardInfo()
 	for (unique_ptr<KarakterKaart>& kaart : karakterKaarten_) {
 		result += kaart->getInfo();
 		if (&kaart != &karakterKaarten_.back())
+			result += ", ";
+	}
+
+	return result;
+}
+
+std::string Player::getBuildingInfo()
+{
+	std::string result = "Je hebt de volgende gebouwen: \r\n";
+
+	for (unique_ptr<BouwKaart> & kaart : gebouwen_) {
+		result += kaart->getInfo();
+		if (&kaart != &gebouwen_.back())
 			result += ", ";
 	}
 
@@ -90,10 +103,48 @@ std::string Player::addGold(int gold)
 
 std::string Player::useAbility()
 {
+	if (usedAbility_)
+	{
+		return "Je hebt je karaktereigenschap al gebruikt deze beurt.";
+	}
+	usedAbility_ = true;
+
 	return "Je karaktereigenschap gebruiken is nog niet mogelijk";
 }
 
 std::string Player::buildCard(std::string card)
 {
-	return "Bouwen is nog niet mogelijk";
+	if (maxBuilds_ <= 0)
+	{
+		return "Je mag deze beurt niet meer bouwen.";
+	}
+
+	auto it = std::find_if(bouwKaarten_.begin(), bouwKaarten_.end(), [&card](std::unique_ptr<BouwKaart>& b)
+	{
+		return b->getName() == card;
+	});
+
+	if (it == bouwKaarten_.end())
+	{
+		return "'" + card + "' is geen geldige bouwkaart.";
+	}
+	
+	if (goudstukken_ >= (*it)->getPrice())
+	{
+		GameController::getInstance().messageAllPlayers(name + " bouwt een " + card + " voor " + std::to_string((*it)->getPrice()) + " goud.");
+		goudstukken_ -= (*it)->getPrice();
+		gebouwen_.push_back(std::move(*it));
+		bouwKaarten_.erase(it);
+		--maxBuilds_;
+
+		return getGoldInfo();
+	}
+
+	return "Je hebt niet genoeg goud om " + card + " te bouwen.";
+}
+
+void Player::newTurn()
+{
+	maxBuilds_ = 1;
+	usedAbility_ = false;
 }

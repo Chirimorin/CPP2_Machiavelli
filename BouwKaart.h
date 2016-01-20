@@ -8,6 +8,7 @@ public:
 
 	bool IsValid() const { return isValid_; };
 	std::string getName() { return naam_; };
+	int getPrice() { return prijs_; }
 
 	std::string getInfo() { return getColorString() + naam_ + "\33[40m (" + std::to_string(prijs_) + ')'; }
 

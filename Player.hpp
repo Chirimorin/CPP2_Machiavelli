@@ -30,6 +30,7 @@ public:
 
 	std::string getPlayerInfo();
 	std::string getCharacterCardInfo();
+	std::string getBuildingInfo();
 	std::string getBuildCardInfo();
 	std::string getGoldInfo();
 
@@ -40,6 +41,8 @@ public:
 
 	std::string useAbility();
 	std::string buildCard(std::string card);
+
+	void newTurn();
 private:
 	std::string name;
 	int goudstukken_ = 0;

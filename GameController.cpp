@@ -218,20 +218,14 @@ void GameController::loadCharacterCards()
 // DIT GELDT ALLEEN VOOR 2 SPELERS (BIJ 3 SPELERS MOET HET ANDERS)
 void GameController::distributeCharacterCards()
 {
-	if (cheat_)
-	{
-		cheatDistributeCharacterCards();
-		return;
-	}
-
-	currentState_ = GameState::ChooseCharacter;
-
+	// Pak de afgelegde karakterkaarten terug
 	for (std::unique_ptr<KarakterKaart>& kaart : discardedKarakterKaarten_)
 	{
 		karakterKaarten_.push_back(std::move(kaart));
 	}
 	discardedKarakterKaarten_.clear();
 
+	// Pak de gekozen karakterkaarten terug
 	for (std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> pair : spelers_)
 	{
 		for (std::unique_ptr<KarakterKaart>& kaart : pair.first->getAllCharacterCards())
@@ -242,7 +236,15 @@ void GameController::distributeCharacterCards()
 
 	// Schud de karakterkaarten
 	std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
-	
+
+	if (cheat_)
+	{
+		cheatDistributeCharacterCards();
+		return;
+	}
+
+	currentState_ = GameState::ChooseCharacter;
+
 	// Bepaal de koning
 	messageAllPlayers(koning_->get_name() + " is de koning deze ronde.");
 	currentPlayer_ = koning_;
@@ -334,8 +336,6 @@ void GameController::removeCharacterCard(std::string name)
 void GameController::cheatDistributeCharacterCards()
 {
 	if (spelers_.size() == 2) {
-		std::shuffle(karakterKaarten_.begin(), karakterKaarten_.end(), Random::getEngine());
-
 		// Verdeel karakaterkaarten
 		for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
 			for (int i = 0; i < 2; ++i)
@@ -362,6 +362,7 @@ void GameController::startRound()
 void GameController::newTurn()
 {
 	currentState_ = GameState::ChooseGoldOrCard;
+	currentPlayer_->newTurn();
 	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
 
