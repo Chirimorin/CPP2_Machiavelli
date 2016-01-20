@@ -113,10 +113,12 @@ std::string Player::useAbility(int currentCharacter)
 	{
 	case 1: // Moordenaar
 		// TODO: karakter vermoorden
-		break;
+		GameController::getInstance().killCharacter();
+		return "";
 	case 2: // Dief
 		// TODO: karakter bestelen
-		break;
+		GameController::getInstance().robCharacter();
+		return "";
 	case 3: // Magier
 		// TODO: handkaarten omruilen met speler of gelijk aantal omruilen met de bank
 		break;

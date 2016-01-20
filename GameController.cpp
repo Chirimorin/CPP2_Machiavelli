@@ -95,6 +95,16 @@ bool GameController::handleCommand(ClientCommand& command)
 			useAbility();
 			return true;
 		}
+		if (currentState_ == GameState::ChooseCharacterToKill)
+		{
+			chooseCharacterToKill(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::ChooseCharacterToRob)
+		{
+			chooseCharacterToRob(command.get_cmd());
+			return true;
+		}
 	}
 
 	return false;
@@ -175,6 +185,13 @@ void GameController::nextPlayer()
 	else
 	{
 		++currentCharacter_;
+
+		// TODO: nog niet kunnen testen of dit werkt
+		// Het vermoorde karakter overslaan
+		if (currentCharacter_ == murderedCharacter_) {
+			++currentCharacter_;
+		}
+
 		if (currentCharacter_ > 8)
 		{
 			messageAllPlayers("Alle characters zijn aan de beurt geweest.");
@@ -356,6 +373,8 @@ void GameController::startRound()
 {
 	currentState_ = GameState::PlayTurn;
 	currentCharacter_ = 0;
+	murderedCharacter_ = -1;
+	robbedCharacter_ = -1;
 	nextPlayer();
 }
 
@@ -366,7 +385,27 @@ void GameController::newTurn()
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
 	messagePlayer(currentPlayer_, currentPlayer_->newTurn(currentCharacter_));
 
-	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | eigenschap]");
+	// Koning aanpassen
+	if (currentCharacter_ == 4) { 
+		koning_ = currentPlayer_;
+	}
+
+	// TODO: nog niet kunnen testen of dit werkt
+	// Check of het karakter wordt bestolen
+	if (currentCharacter_ == robbedCharacter_) {
+		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+		{
+			return p.first->hasCharacterCard(2);
+		});
+
+		(*it).first->set_gold(currentPlayer_->get_gold());
+		currentPlayer_->set_gold(0);
+
+		messageAllPlayers(currentPlayer_->get_name() +  " moet is beroofd door de dief en heeft geen goudstukken meer.");
+	}
+
+
+	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | karaktereigenschap]");
 
 	// TODO: zorgen dat ze speler meerdere acties kan doen tijdens zijn beurt in plaats van 1:
 	// - 2 goudstukken of bouwkaart
@@ -475,4 +514,88 @@ void GameController::buildCard(std::string card)
 void GameController::useAbility()
 {
 	messagePlayer(currentPlayer_, currentPlayer_->useAbility(currentCharacter_));
+}
+
+void GameController::killCharacter()
+{
+	currentState_ = GameState::ChooseCharacterToKill;
+	GameController::promptForKillCharacter();
+}
+
+void GameController::promptForKillCharacter()
+{
+	messagePlayer(currentPlayer_, "Welk karakter wil je vermoorden?");
+
+	std::stringstream ss = std::stringstream();
+
+	for (std::unique_ptr<KarakterKaart>& kaart : karakterKaarten_) {
+		if (kaart->getNumber() != currentCharacter_) {
+			ss << kaart->getInfo() << ", ";
+		}
+	}
+
+	messagePlayer(currentPlayer_, ss.str());
+}
+
+void GameController::chooseCharacterToKill(std::string name)
+{
+	auto it = std::find_if(karakterKaarten_.begin(), karakterKaarten_.end(), [this, name](std::unique_ptr<KarakterKaart>& k)
+	{
+		return k.get()->getName() == name && k.get()->getNumber() != currentCharacter_;
+	});
+
+	if (it == karakterKaarten_.end())
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldig karakter.");
+		promptForKillCharacter();
+		return;
+	}
+
+	murderedCharacter_ = (*it)->getNumber();
+	messageAllPlayers("De " + (*it)->getName() + " wordt vermoord.");
+
+	promptPlayTurn();
+}
+
+void GameController::robCharacter()
+{
+	currentState_ = GameState::ChooseCharacterToRob;
+	GameController::promptForRobCharacter();
+}
+
+void GameController::promptForRobCharacter()
+{
+	messagePlayer(currentPlayer_, "Welk karakter wil je beroven?");
+
+	std::stringstream ss = std::stringstream();
+
+	for (std::unique_ptr<KarakterKaart>& kaart : karakterKaarten_) {
+		if (kaart->getNumber() != currentCharacter_ && 
+			kaart->getNumber() != 1 && 
+			kaart->getNumber() != murderedCharacter_) {
+			ss << kaart->getInfo() << ", ";
+		}
+	}
+
+	messagePlayer(currentPlayer_, ss.str());
+}
+
+void GameController::chooseCharacterToRob(std::string name)
+{
+	auto it = std::find_if(karakterKaarten_.begin(), karakterKaarten_.end(), [this, name](std::unique_ptr<KarakterKaart>& k)
+	{
+		return k.get()->getName() == name && k.get()->getNumber() != 1 && k.get()->getNumber() != 2 && k.get()->getNumber() != murderedCharacter_;
+	});
+
+	if (it == karakterKaarten_.end())
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldig karakter.");
+		promptForRobCharacter();
+		return;
+	}
+
+	robbedCharacter_ = (*it)->getNumber();
+	messageAllPlayers("De " + (*it)->getName() + " wordt beroofd.");
+
+	promptPlayTurn();
 }

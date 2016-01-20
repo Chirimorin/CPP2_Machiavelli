@@ -17,7 +17,9 @@ enum class GameState
 	NewRound,
 	ChooseGoldOrCard,
 	PickBuildCard,
-	PlayTurn
+	PlayTurn,
+	ChooseCharacterToKill,
+	ChooseCharacterToRob
 };
 
 
@@ -33,6 +35,10 @@ public:
 	bool handleCommand(ClientCommand& command);
 	void messageAllPlayers(std::string message);
 	void messagePlayer(std::shared_ptr<Player> player, std::string message);
+
+	void killCharacter();
+	void robCharacter();
+
 private:
 	GameController();
 	~GameController() {};
@@ -48,6 +54,10 @@ private:
 	bool cheat_ = false;
 
 	GameState currentState_ = GameState::NotStarted;
+
+	int murderedCharacter_ = -1;
+	int robbedCharacter_ = -1;
+	std::shared_ptr<Player> dief_;
 
 	std::vector<std::unique_ptr<BouwKaart>> mogelijkeNieuweBouwkaarten_;
 	//std::unique_ptr<BouwKaart> nieuweBouwKaart1_;
@@ -75,4 +85,11 @@ private:
 	void promptPlayTurn();
 	void buildCard(std::string card);
 	void useAbility();
+
+	void promptForKillCharacter();
+	void chooseCharacterToKill(std::string name);
+
+	void promptForRobCharacter();
+	void chooseCharacterToRob(std::string name);
+	
 };
