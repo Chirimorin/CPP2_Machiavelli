@@ -395,7 +395,6 @@ void GameController::chooseNewBuildCard()
 {
 	currentState_ = GameState::PickBuildCard;
 
-	// TODO: bouwmeester krijgt de 2 kaarten meteen
 	for (int i = 0; i < 2; ++i)
 	{
 		mogelijkeNieuweBouwkaarten_.push_back(std::move(kaartStapel_->getBuildCard()));
@@ -406,6 +405,24 @@ void GameController::chooseNewBuildCard()
 
 void GameController::promptForGetNewBuildCard()
 {
+	if (currentCharacter_ == 7) // bouwmeester krijgt beide kaarten
+	{
+		std::string result = "Je pakt de volgende bouwkaarten:\r\n";
+		for (auto iter = mogelijkeNieuweBouwkaarten_.begin(); iter < mogelijkeNieuweBouwkaarten_.end(); ++iter)
+		{
+			result += (*iter)->getInfo() + ", ";
+			currentPlayer_->addBuildCard(std::move(*iter));
+		}
+		mogelijkeNieuweBouwkaarten_.clear();
+
+		messageAllPlayers(currentPlayer_->get_name() + " pakt twee bouwkaarten.");
+		messagePlayer(currentPlayer_, result);
+		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
+
+		promptPlayTurn();
+		return;
+	}
+
 	std::string result = "Kies een van de volgende bouwkaarten:\r\n";
 	for (auto it = mogelijkeNieuweBouwkaarten_.begin(); it < mogelijkeNieuweBouwkaarten_.end(); ++it)
 	{
@@ -457,5 +474,5 @@ void GameController::buildCard(std::string card)
 
 void GameController::useAbility()
 {
-	messagePlayer(currentPlayer_, currentPlayer_->useAbility());
+	messagePlayer(currentPlayer_, currentPlayer_->useAbility(currentCharacter_));
 }
