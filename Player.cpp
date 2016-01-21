@@ -205,17 +205,32 @@ bool Player::hasEightOrMoreBuildings()
 	return false;
 }
 
-int Player::getScore()
+void Player::calculateScore(bool isWinner)
 {
-	int score = 0;
+	score_ = 0;
+
+	std::set<std::string> colors;
 
 	// Alle punten voor de gebouwen in zijn stad
 	for (auto iterator = gebouwen_.begin(); iterator != gebouwen_.end(); ++iterator) {
-		score += (*iterator)->getPrice();
+		score_ += (*iterator)->getPrice();
+		colors.insert((*iterator)->getColor());
 	}
 
-	// TODO: 3 punten als de speler gebouwen van alle 5 kleuren bezit
+	rawScore_ = score_;
 
+	// 3 punten als de speler gebouwen van alle 5 kleuren bezit
+	if (colors.size() >= 5)
+	{
+		score_ += 3;
+	}
 
-	return score;
+	if (gebouwen_.size() >= 8)
+	{
+		score_ += 2;
+	}
+	if (isWinner)
+	{
+		score_ += 2; // 2 extra punten, totaal 4
+	}
 }

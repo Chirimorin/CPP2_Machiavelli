@@ -17,7 +17,8 @@ enum class GameState
 	NewRound,
 	ChooseGoldOrCard,
 	PickBuildCard,
-	PlayTurn
+	PlayTurn, 
+	Ended
 };
 
 
@@ -77,4 +78,6 @@ private:
 	void promptPlayTurn();
 	void buildCard(std::string card);
 	void useAbility();
+
+	void endGame();
 };
