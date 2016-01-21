@@ -96,8 +96,8 @@ std::string Player::getCharacterInfo(int number)
 }
 
 std::string Player::addGold(int gold)
-{ 
-	goudstukken_ += gold; 
+{
+	goudstukken_ += gold;
 	return "Je hebt nu " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
 }
 
@@ -127,7 +127,7 @@ std::string Player::useAbility(int currentCharacter)
 	case 4: // Koning
 		return getGoldForColor("geel");
 	case 5: // Prediker
-		// TODO: Zijn gebouwenkaarten mogen door de condotierre niet verwijderd worden. 
+		// TODO: Zijn gebouwenkaarten mogen door de condotierre niet verwijderd worden.
 		return getGoldForColor("blauw");
 	case 6: // Koopman
 		return getGoldForColor("groen");
@@ -159,7 +159,17 @@ std::string Player::buildCard(std::string card)
 	{
 		return "'" + card + "' is geen geldige bouwkaart.";
 	}
-	
+
+	auto it2 = std::find_if(gebouwen_.begin(), gebouwen_.end(), [&card](std::unique_ptr<BouwKaart>& b)
+	{
+		return b->getName() == card;
+	});
+
+	if (it2 != gebouwen_.end())
+	{
+		return "Je hebt al een " + card + " in je stad. Je mag maar 1 gebouw van elk type hebben.";
+	}
+
 	if (goudstukken_ >= (*it)->getPrice())
 	{
 		GameController::getInstance().messageAllPlayers(name + " bouwt een " + card + " voor " + std::to_string((*it)->getPrice()) + " goud.");
@@ -192,6 +202,18 @@ std::string Player::newTurn(int currentCharacter)
 	return "Je krijgt geen extra goud deze beurt.";
 }
 
+int Player::getAmountOfBuildCards()
+{
+	return bouwKaarten_.size();
+}
+
+std::vector<std::unique_ptr<BouwKaart>> Player::getAllBuildCards()
+{
+	std::vector<std::unique_ptr<BouwKaart>> result = std::move(bouwKaarten_);
+	bouwKaarten_.clear();
+	return result;
+}
+
 std::string Player::getGoldForColor(std::string color)
 {
 	int numGold = std::count_if(gebouwen_.begin(), gebouwen_.end(), [color](std::unique_ptr<BouwKaart>& g)
@@ -203,14 +225,40 @@ std::string Player::getGoldForColor(std::string color)
 	return "Je hebt " + std::to_string(numGold) + " goud gekregen voor je gebouwen die " + color + " zijn.\r\n" + getGoldInfo();
 }
 
-int Player::getAmountOfBuildCards()
+bool Player::hasEightOrMoreBuildings()
 {
-	return bouwKaarten_.size();
+	if (gebouwen_.size() > 7) {
+		return true;
+	}
+	return false;
 }
 
-std::vector<std::unique_ptr<BouwKaart>> Player::getAllBuildCards()
+void Player::calculateScore(bool isWinner)
 {
-	std::vector<std::unique_ptr<BouwKaart>> result = std::move(bouwKaarten_);
-	bouwKaarten_.clear();
-	return result;
+	score_ = 0;
+
+	std::set<std::string> colors;
+
+	// Alle punten voor de gebouwen in zijn stad
+	for (auto iterator = gebouwen_.begin(); iterator != gebouwen_.end(); ++iterator) {
+		score_ += (*iterator)->getPrice();
+		colors.insert((*iterator)->getColor());
+	}
+
+	rawScore_ = score_;
+
+	// 3 punten als de speler gebouwen van alle 5 kleuren bezit
+	if (colors.size() >= 5)
+	{
+		score_ += 3;
+	}
+
+	if (gebouwen_.size() >= 8)
+	{
+		score_ += 2;
+	}
+	if (isWinner)
+	{
+		score_ += 2; // 2 extra punten, totaal 4
+	}
 }

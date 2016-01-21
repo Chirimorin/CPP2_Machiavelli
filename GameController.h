@@ -20,7 +20,8 @@ enum class GameState
 	PlayTurn,
 	ChooseCharacterToKill,
 	ChooseCharacterToRob,
-	ChooseBuildingToDestroy
+	ChooseBuildingToDestroy,
+	Ended
 };
 
 
@@ -60,6 +61,7 @@ private:
 	int murderedCharacter_ = -1;
 	int robbedCharacter_ = -1;
 	std::shared_ptr<Player> dief_;
+	std::shared_ptr<Player> winnaar_ = nullptr;
 
 	std::vector<std::unique_ptr<BouwKaart>> mogelijkeNieuweBouwkaarten_;
 	//std::unique_ptr<BouwKaart> nieuweBouwKaart1_;
@@ -83,7 +85,7 @@ private:
 	void chooseNewBuildCard();
 	void promptForGetNewBuildCard();
 	void getNewBuildCard(std::string name);
-	
+
 	void promptPlayTurn();
 	void buildCard(std::string card);
 	void useAbility();
@@ -96,5 +98,6 @@ private:
 
 	void promptForDestroyBuilding();
 	void chooseBuildingToDestroy(std::string building);
-	
+
+	void endGame();
 };
