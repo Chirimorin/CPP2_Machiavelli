@@ -11,8 +11,6 @@
 
 #include "KarakterKaart.h"
 #include "BouwKaart.h"
-#include "Socket.h"
-#include <string>
 
 class Player {
 public:
