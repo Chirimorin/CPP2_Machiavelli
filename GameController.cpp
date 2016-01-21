@@ -79,10 +79,13 @@ bool GameController::handleCommand(ClientCommand& command)
 	
 		if (command.get_cmd() == "end turn")
 		{
+			// Check of de speler als eerste 8 gebouwen heeft
+			if (winnaar_ == nullptr && currentPlayer_->hasEightOrMoreBuildings()) {
+				winnaar_ = currentPlayer_;
+			}
 			nextPlayer();
 			return true;
 		}
-		// TODO: handle command voor de beurt van een speler
 		
 		if (command.get_cmd().length() > 5 &&
 			command.get_cmd().substr(0,5) == "bouw ")
@@ -123,6 +126,7 @@ bool GameController::startGame()
 {
 	messageAllPlayers("\33[2JHet spel begint nu");
 
+	winnaar_ = nullptr;
 	goudstukken_ = 30;
 	kaartStapel_ = std::make_unique<KaartStapel>();
 	loadCharacterCards();
@@ -178,7 +182,11 @@ void GameController::nextPlayer()
 		if (currentCharacter_ > 8)
 		{
 			messageAllPlayers("Alle characters zijn aan de beurt geweest.");
-			distributeCharacterCards();
+
+			if (winnaar_ != nullptr)
+				endGame();
+			else
+				distributeCharacterCards();
 			return;
 		}
 		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
@@ -475,4 +483,24 @@ void GameController::buildCard(std::string card)
 void GameController::useAbility()
 {
 	messagePlayer(currentPlayer_, currentPlayer_->useAbility(currentCharacter_));
+}
+
+void GameController::endGame()
+{
+	std::set<std::shared_ptr<Player>, less_than_by_score> leaderboard;
+
+	for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
+		iterator->first->calculateScore(iterator->first == winnaar_);
+		leaderboard.insert(iterator->first);
+	}
+
+	messageAllPlayers("Het spel is geeindigd. Eindscores:");
+	int position = 1;
+	for (auto it = leaderboard.begin(); it != leaderboard.end(); ++it)
+	{
+		messageAllPlayers(std::to_string(position) + ": " + (*it)->get_name() + ", score: " + std::to_string((*it)->getScore()));
+		++position;
+	}
+
+	currentState_ = GameState::Ended;
 }

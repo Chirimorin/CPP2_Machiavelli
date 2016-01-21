@@ -206,3 +206,41 @@ std::string Player::getGoldForColor(std::string color)
 
 	return "Je hebt " + std::to_string(numGold) + " goud gekregen voor je gebouwen die " + color + " zijn.\r\n" + getGoldInfo();
 }
+
+bool Player::hasEightOrMoreBuildings()
+{
+	if (gebouwen_.size() > 7) {
+		return true;
+	}
+	return false;
+}
+
+void Player::calculateScore(bool isWinner)
+{
+	score_ = 0;
+
+	std::set<std::string> colors;
+
+	// Alle punten voor de gebouwen in zijn stad
+	for (auto iterator = gebouwen_.begin(); iterator != gebouwen_.end(); ++iterator) {
+		score_ += (*iterator)->getPrice();
+		colors.insert((*iterator)->getColor());
+	}
+
+	rawScore_ = score_;
+
+	// 3 punten als de speler gebouwen van alle 5 kleuren bezit
+	if (colors.size() >= 5)
+	{
+		score_ += 3;
+	}
+
+	if (gebouwen_.size() >= 8)
+	{
+		score_ += 2;
+	}
+	if (isWinner)
+	{
+		score_ += 2; // 2 extra punten, totaal 4
+	}
+}
