@@ -36,8 +36,10 @@ bool GameController::handleCommand(ClientCommand& command)
 	if (currentState_ == GameState::NotStarted)
 	{
 		if (command.get_cmd() == "start") {
-			if (spelers_.size() >= 2)
+			if (spelers_.size() >= 2) {
+				cheat_ = false;
 				return startGame();
+			}
 		}
 		if (command.get_cmd() == "start cheat") {
 			if (spelers_.size() >= 2) {
@@ -158,12 +160,13 @@ bool GameController::startGame()
 	messageAllPlayers("\33[2JHet spel begint nu");
 
 	winnaar_ = nullptr;
-	goudstukken_ = 30;
 	kaartStapel_ = std::make_unique<KaartStapel>();
 	loadCharacterCards();
 
 	for (auto iterator = spelers_.begin(); iterator != spelers_.end(); ++iterator) {
 		std::shared_ptr<Player> speler = iterator->first;
+
+		speler->newGame();
 
 		// Verdeel bouwkaarten
 		for (int i = 0; i < 4; i++)
@@ -171,12 +174,13 @@ bool GameController::startGame()
 			speler->addBuildCard(kaartStapel_->getBuildCard());
 		}
 
-		// Verdeel goudstukken
-		speler->set_gold(2);
-
 		// Toon speler informatie
 		messagePlayer(speler, speler->getBuildCardInfo());
 		messagePlayer(speler, speler->getGoldInfo());
+
+		// alleen voor cheaten
+		//for (int i = 0; i < 7; ++i)
+		//	speler->cheatBuildCard(std::move(kaartStapel_->getBuildCard()));
 	}
 
 	// Bepaal de koning
@@ -246,6 +250,8 @@ void GameController::nextPlayer()
 void GameController::loadCharacterCards()
 {
 	std::ifstream karakterkaarten("Resources/karakterkaarten.csv");
+	karakterKaarten_.clear();
+	discardedKarakterKaarten_.clear();
 
 	if (karakterkaarten)
 	{
@@ -449,7 +455,6 @@ void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<Karakter
 
 void GameController::addGold()
 {
-	goudstukken_ -= 2;
 	messageAllPlayers(currentPlayer_->get_name() + " pakt 2 goud.");
 	messagePlayer(currentPlayer_, currentPlayer_->addGold(2));
 
@@ -667,8 +672,6 @@ void GameController::destroyBuilding()
 		return;
 	}
 
-	// TODO: check of de speler er geld voor heeft
-
 	// Check of andere speler gebouwen heeft
 	if ((*it).first->getAmountOfBuildings() > 0) {
 		promptForDestroyBuilding();
@@ -832,8 +835,6 @@ void GameController::goToPreviousState()
 	}
 }
 
-// TODO: check als een gebouw meer als 1 kost, of de speler geld voor heeft
-
 void GameController::endGame()
 {
 	std::set<std::shared_ptr<Player>, less_than_by_score> leaderboard;
@@ -851,5 +852,5 @@ void GameController::endGame()
 		++position;
 	}
 
-	currentState_ = GameState::Ended;
+	currentState_ = GameState::NotStarted;
 }

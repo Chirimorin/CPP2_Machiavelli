@@ -41,6 +41,7 @@ public:
 	std::string addGold(int gold);
 
 	std::string useAbility(int currentCharacter);
+	void cheatBuildCard(std::unique_ptr<BouwKaart> b);
 	std::string buildCard(std::string card);
 
 	std::string newTurn(int currentCharacter);
@@ -54,6 +55,8 @@ public:
 	int getRawScore() const { return rawScore_; }
 
 	bool tryDestroyBuilding(std::string name, int& gold);
+
+	void newGame();
 private:
 	std::string name;
 	int goudstukken_ = 0;

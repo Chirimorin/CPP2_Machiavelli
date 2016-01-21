@@ -150,6 +150,11 @@ std::string Player::useAbility(int currentCharacter)
 	return "";
 }
 
+void Player::cheatBuildCard(std::unique_ptr<BouwKaart> b)
+{
+	gebouwen_.push_back(std::move(b));
+}
+
 std::string Player::buildCard(std::string card)
 {
 	if (maxBuilds_ <= 0)
@@ -295,4 +300,14 @@ bool Player::tryDestroyBuilding(std::string name, int& gold)
 	GameController::getInstance().messageAllPlayers("De condottiere sloopt de " + name + " van " + get_name() + ".");
 
 	return true;
+}
+
+void Player::newGame()
+{
+	goudstukken_ = 2;
+	rawScore_ = 0;
+	score_ = 0;
+	gebouwen_.clear();
+	bouwKaarten_.clear();
+	karakterKaarten_.clear();
 }

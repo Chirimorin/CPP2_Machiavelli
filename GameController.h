@@ -20,8 +20,7 @@ enum class GameState
 	ChooseCharacterToKill,
 	ChooseCharacterToRob,
 	ChooseBuildingToDestroy,
-	ChooseMageAbility,
-	Ended
+	ChooseMageAbility
 };
 
 
@@ -56,7 +55,6 @@ private:
 	std::shared_ptr<Player> koning_;
 	std::shared_ptr<Player> currentPlayer_;
 	int currentCharacter_ = 1;
-	int goudstukken_ = 30;
 	bool cheat_ = false;
 
 	GameState currentState_ = GameState::NotStarted;
@@ -64,12 +62,10 @@ private:
 
 	int murderedCharacter_ = -1;
 	int robbedCharacter_ = -1;
-	std::shared_ptr<Player> dief_;
+	std::shared_ptr<Player> dief_ = nullptr;
 	std::shared_ptr<Player> winnaar_ = nullptr;
 
 	std::vector<std::unique_ptr<BouwKaart>> mogelijkeNieuweBouwkaarten_;
-	//std::unique_ptr<BouwKaart> nieuweBouwKaart1_;
-	//std::unique_ptr<BouwKaart> nieuweBouwKaart2_;
 
 	bool startGame();
 	void nextPlayer();
