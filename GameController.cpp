@@ -413,10 +413,11 @@ void GameController::newTurn()
 			return p.first->hasCharacterCard(2);
 		});
 
-		(*it).first->set_gold(currentPlayer_->get_gold());
+		messageAllPlayers(currentPlayer_->get_name() + " is beroofd door de dief en heeft geen goudstukken meer.");
+		messagePlayer((*it).first, (*it).first->addGold(currentPlayer_->get_gold()));
 		currentPlayer_->set_gold(0);
 
-		messageAllPlayers(currentPlayer_->get_name() + " moet is beroofd door de dief en heeft geen goudstukken meer.");
+		messagePlayer(currentPlayer_, currentPlayer_->addGold(0));
 	}
 
 	promptNewTurn();
@@ -580,57 +581,83 @@ void GameController::chooseCharacterToKill(std::string name)
 	{
 		promptNewTurn();
 	}
-	if (previousState_ == GameState::PlayTurn)
+	else
 	{
 		promptPlayTurn();
-	}
-	if (previousState_ == GameState::PickBuildCard)
-	{
-		promptForGetNewBuildCard();
 	}
 }
 
 void GameController::robCharacter()
 {
+	previousState_ = currentState_;
 	currentState_ = GameState::ChooseCharacterToRob;
 	promptForRobCharacter();
 }
 
 void GameController::promptForRobCharacter()
 {
-	messagePlayer(currentPlayer_, "Welk karakter wil je beroven?");
+	std::string result = "Welk karakter wil je beroven?\r\n[ ";
 
-	std::stringstream ss = std::stringstream();
+	if (murderedCharacter_ != 3)
+		result += "Magier | ";
+	if (murderedCharacter_ != 4)
+		result += "Koning | ";
+	if (murderedCharacter_ != 5)
+		result += "Prediker | ";
+	if (murderedCharacter_ != 6)
+		result += "Koopman | ";
+	if (murderedCharacter_ != 7)
+		result += "Bouwmeester | ";
+	if (murderedCharacter_ != 8)
+		result += "Condottiere ";
+	else
+		result = result.substr(0, result.size() - 2);
+	result += "]";
 
-	for (std::unique_ptr<KarakterKaart>& kaart : karakterKaarten_) {
-		if (kaart->getNumber() != currentCharacter_ &&
-			kaart->getNumber() != 1 &&
-			kaart->getNumber() != murderedCharacter_) {
-			ss << kaart->getInfo() << ", ";
-		}
-	}
-
-	messagePlayer(currentPlayer_, ss.str());
+	messagePlayer(currentPlayer_, result);
 }
 
 void GameController::chooseCharacterToRob(std::string name)
 {
-	auto it = std::find_if(karakterKaarten_.begin(), karakterKaarten_.end(), [this, name](std::unique_ptr<KarakterKaart>& k)
-	{
-		return k.get()->getName() == name && k.get()->getNumber() != 1 && k.get()->getNumber() != 2 && k.get()->getNumber() != murderedCharacter_;
-	});
+	robbedCharacter_ = -1;
 
-	if (it == karakterKaarten_.end())
+	if (name == "Magier")
+		robbedCharacter_ = 3;
+	if (name == "Koning")
+		robbedCharacter_ = 4;
+	if (name == "Prediker")
+		robbedCharacter_ = 5;
+	if (name == "Koopman")
+		robbedCharacter_ = 6;
+	if (name == "Bouwmeester")
+		robbedCharacter_ = 7;
+	if (name == "Condottiere")
+		robbedCharacter_ = 8;
+
+	if (robbedCharacter_ == -1)
 	{
 		messagePlayer(currentPlayer_, name + " is geen geldig karakter.");
 		promptForRobCharacter();
 		return;
 	}
 
-	robbedCharacter_ = (*it)->getNumber();
-	messageAllPlayers("De " + (*it)->getName() + " wordt beroofd.");
+	if (robbedCharacter_ == murderedCharacter_)
+	{
+		messagePlayer(currentPlayer_, "De " + name + " is vermoord en kan niet bestolen worden.");
+		promptForRobCharacter();
+		return;
+	}
 
-	promptPlayTurn();
+	messageAllPlayers("De " + name + " wordt bestolen.");
+
+	if (previousState_ == GameState::ChooseGoldOrCard)
+	{
+		promptNewTurn();
+	}
+	else
+	{
+		promptPlayTurn();
+	}
 }
 
 void GameController::destroyBuilding()
