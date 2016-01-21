@@ -36,11 +36,13 @@ public:
 	bool handleCommand(ClientCommand& command);
 	void messageAllPlayers(std::string message);
 	void messagePlayer(std::shared_ptr<Player> player, std::string message);
+	void messageCurrentPlayer(std::string message);
 
 	void killCharacter();
 	void robCharacter();
 	void destroyBuilding();
 
+	void addBuildCard(std::unique_ptr<BouwKaart> bouwkaart);
 private:
 	GameController();
 	~GameController() {};
@@ -99,6 +101,8 @@ private:
 
 	void promptForDestroyBuilding();
 	void chooseBuildingToDestroy(std::string building);
+
+	void goToPreviousState();
 
 	void endGame();
 };

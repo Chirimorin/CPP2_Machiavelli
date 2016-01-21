@@ -37,9 +37,14 @@ std::string Player::getCharacterCardInfo()
 	return result;
 }
 
-std::string Player::getBuildingInfo()
+std::string Player::getBuildingInfo(bool isCurrentPlayer)
 {
-	std::string result = "Je hebt de volgende gebouwen: \r\n";
+	std::string result = "";
+
+	if (isCurrentPlayer)
+		result = "Je hebt de volgende gebouwen: \r\n";
+	else
+		result = "De tegenstander heeft de volgende gebouwen: \r\n";
 
 	for (unique_ptr<BouwKaart> & kaart : gebouwen_) {
 		result += kaart->getInfo();
@@ -112,11 +117,9 @@ std::string Player::useAbility(int currentCharacter)
 	switch (currentCharacter)
 	{
 	case 1: // Moordenaar
-		// TODO: karakter vermoorden
 		GameController::getInstance().killCharacter();
 		return "";
 	case 2: // Dief
-		// TODO: karakter bestelen
 		GameController::getInstance().robCharacter();
 		return "";
 	case 3: // Magier
@@ -127,7 +130,6 @@ std::string Player::useAbility(int currentCharacter)
 	case 4: // Koning
 		return getGoldForColor("geel");
 	case 5: // Prediker
-		// TODO: Zijn gebouwenkaarten mogen door de condotierre niet verwijderd worden.
 		return getGoldForColor("blauw");
 	case 6: // Koopman
 		return getGoldForColor("groen");
@@ -261,4 +263,31 @@ void Player::calculateScore(bool isWinner)
 	{
 		score_ += 2; // 2 extra punten, totaal 4
 	}
+}
+
+bool Player::tryDestroyBuilding(std::string name, int& gold)
+{
+	auto it = std::find_if(gebouwen_.begin(), gebouwen_.end(), [name](std::unique_ptr<BouwKaart>& b)
+	{
+		return name == b->getName();
+	});
+
+	if (it == gebouwen_.end())
+	{
+		GameController::getInstance().messageCurrentPlayer("Je tegenstander heeft geen " + name + " in zijn stad.");
+		return false;
+	}
+
+	if ((*it)->getPrice() - 1 > gold)
+	{
+		GameController::getInstance().messageCurrentPlayer("Je hebt niet genoeg goud om een " + name + " te slopen.");
+		return false;
+	}
+
+	gold -= ((*it)->getPrice() - 1);
+	GameController::getInstance().addBuildCard(std::move(*it));
+	gebouwen_.erase(it);
+	GameController::getInstance().messageAllPlayers("De condottiere sloopt de " + name + " van " + get_name() + ".");
+
+	return true;
 }

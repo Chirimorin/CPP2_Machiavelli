@@ -30,7 +30,7 @@ public:
 
 	std::string getPlayerInfo();
 	std::string getCharacterCardInfo();
-	std::string getBuildingInfo();
+	std::string getBuildingInfo(bool isCurrentPlayer = true);
 	std::string getBuildCardInfo();
 	std::string getGoldInfo();
 
@@ -46,10 +46,13 @@ public:
 
 	int getAmountOfBuildCards();
 	std::vector<std::unique_ptr<BouwKaart>> getAllBuildCards();
+	int getAmountOfBuildings() { return gebouwen_.size(); }
 	bool hasEightOrMoreBuildings();
 	void calculateScore(bool isWinner);
 	int getScore() const { return score_; }
 	int getRawScore() const { return rawScore_; }
+
+	bool tryDestroyBuilding(std::string name, int& gold);
 private:
 	std::string name;
 	int goudstukken_ = 0;
