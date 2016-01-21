@@ -87,7 +87,8 @@ bool GameController::handleCommand(ClientCommand& command)
 			return true;
 		}
 
-		if (command.get_cmd().length() > 5 &&
+		if (currentState_ == GameState::PlayTurn &&
+			command.get_cmd().length() > 5 &&
 			command.get_cmd().substr(0, 5) == "bouw ")
 		{
 			buildCard(command.get_cmd().substr(5));
@@ -199,8 +200,6 @@ void GameController::nextPlayer()
 	{
 		++currentCharacter_;
 
-		// TODO: nog niet kunnen testen of dit werkt
-		// Het vermoorde karakter overslaan
 		if (currentCharacter_ == murderedCharacter_) {
 			++currentCharacter_;
 		}
@@ -397,7 +396,6 @@ void GameController::startRound()
 
 void GameController::newTurn()
 {
-	currentState_ = GameState::ChooseGoldOrCard;
 	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
 	messagePlayer(currentPlayer_, currentPlayer_->newTurn(currentCharacter_));
@@ -421,13 +419,18 @@ void GameController::newTurn()
 		messageAllPlayers(currentPlayer_->get_name() + " moet is beroofd door de dief en heeft geen goudstukken meer.");
 	}
 
-
-	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | karaktereigenschap]");
+	promptNewTurn();
 
 	// TODO: zorgen dat ze speler meerdere acties kan doen tijdens zijn beurt in plaats van 1:
 	// - 2 goudstukken of bouwkaart
 	// - bouwen
 	// - karakter eigenschap gebruiken
+}
+
+void GameController::promptNewTurn()
+{
+	currentState_ = GameState::ChooseGoldOrCard;
+	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | karaktereigenschap]");
 }
 
 void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player)
@@ -449,8 +452,6 @@ void GameController::addGold()
 
 void GameController::chooseNewBuildCard()
 {
-	currentState_ = GameState::PickBuildCard;
-
 	for (int i = 0; i < 2; ++i)
 	{
 		mogelijkeNieuweBouwkaarten_.push_back(std::move(kaartStapel_->getBuildCard()));
@@ -461,6 +462,8 @@ void GameController::chooseNewBuildCard()
 
 void GameController::promptForGetNewBuildCard()
 {
+	currentState_ = GameState::PickBuildCard;
+
 	if (currentCharacter_ == 7) // bouwmeester krijgt beide kaarten
 	{
 		std::string result = "Je pakt de volgende bouwkaarten:\r\n";
@@ -535,43 +538,56 @@ void GameController::useAbility()
 
 void GameController::killCharacter()
 {
+	previousState_ = currentState_;
 	currentState_ = GameState::ChooseCharacterToKill;
 	promptForKillCharacter();
 }
 
 void GameController::promptForKillCharacter()
 {
-	messagePlayer(currentPlayer_, "Welk karakter wil je vermoorden?");
-
-	std::stringstream ss = std::stringstream();
-
-	for (std::unique_ptr<KarakterKaart>& kaart : karakterKaarten_) {
-		if (kaart->getNumber() != currentCharacter_) {
-			ss << kaart->getInfo() << ", ";
-		}
-	}
-
-	messagePlayer(currentPlayer_, ss.str());
+	messagePlayer(currentPlayer_, "Welk karakter wil je vermoorden?\r\n[ Dief | Magier | Koning | Prediker | Koopman | Bouwmeester | Condottiere ]");
 }
 
 void GameController::chooseCharacterToKill(std::string name)
 {
-	auto it = std::find_if(karakterKaarten_.begin(), karakterKaarten_.end(), [this, name](std::unique_ptr<KarakterKaart>& k)
-	{
-		return k.get()->getName() == name && k.get()->getNumber() != currentCharacter_;
-	});
+	murderedCharacter_ = -1;
 
-	if (it == karakterKaarten_.end())
+	if (name == "Dief")
+		murderedCharacter_ = 2;
+	if (name == "Magier")
+		murderedCharacter_ = 3;
+	if (name == "Koning")
+		murderedCharacter_ = 4;
+	if (name == "Prediker")
+		murderedCharacter_ = 5;
+	if (name == "Koopman")
+		murderedCharacter_ = 6;
+	if (name == "Bouwmeester")
+		murderedCharacter_ = 7;
+	if (name == "Condottiere")
+		murderedCharacter_ = 8;
+
+	if (murderedCharacter_ == -1)
 	{
 		messagePlayer(currentPlayer_, name + " is geen geldig karakter.");
 		promptForKillCharacter();
 		return;
 	}
 
-	murderedCharacter_ = (*it)->getNumber();
-	messageAllPlayers("De " + (*it)->getName() + " wordt vermoord.");
+	messageAllPlayers("De " + name + " wordt vermoord.");
 
-	promptPlayTurn();
+	if (previousState_ == GameState::ChooseGoldOrCard)
+	{
+		promptNewTurn();
+	}
+	if (previousState_ == GameState::PlayTurn)
+	{
+		promptPlayTurn();
+	}
+	if (previousState_ == GameState::PickBuildCard)
+	{
+		promptForGetNewBuildCard();
+	}
 }
 
 void GameController::robCharacter()

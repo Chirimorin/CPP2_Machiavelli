@@ -14,7 +14,6 @@ enum class GameState
 	NotStarted,
 	ChooseCharacter,
 	RemoveCharacter,
-	NewRound,
 	ChooseGoldOrCard,
 	PickBuildCard,
 	PlayTurn,
@@ -57,6 +56,7 @@ private:
 	bool cheat_ = false;
 
 	GameState currentState_ = GameState::NotStarted;
+	GameState previousState_ = GameState::NotStarted;
 
 	int murderedCharacter_ = -1;
 	int robbedCharacter_ = -1;
@@ -79,6 +79,7 @@ private:
 
 	void startRound();
 	void newTurn();
+	void promptNewTurn();
 	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 
 	void addGold();
