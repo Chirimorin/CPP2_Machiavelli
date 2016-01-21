@@ -121,10 +121,13 @@ std::string Player::useAbility(int currentCharacter)
 		return "";
 	case 3: // Magier
 		// TODO: handkaarten omruilen met speler of gelijk aantal omruilen met de bank
+		// al zijn handkaarten(ook als dit 0 is) voor alle handkaarten van een andere speler omruilen of
+		// naar keuze een aantal handkaarten afleggen en een gelijk aantal gebouwenkaarten trekken
 		break;
 	case 4: // Koning
 		return getGoldForColor("geel");
 	case 5: // Prediker
+		// TODO: Zijn gebouwenkaarten mogen door de condotierre niet verwijderd worden. 
 		return getGoldForColor("blauw");
 	case 6: // Koopman
 		return getGoldForColor("groen");
@@ -133,6 +136,7 @@ std::string Player::useAbility(int currentCharacter)
 		return "De bouwmeester heeft geen karaktereigenschap om te gebruiken.";
 	case 8: // Condotierre
 		// TODO: keuze om gebouw te vernietigen
+		GameController::getInstance().destroyBuilding();
 		return getGoldForColor("rood");
 	}
 
@@ -197,4 +201,16 @@ std::string Player::getGoldForColor(std::string color)
 	goudstukken_ += numGold;
 
 	return "Je hebt " + std::to_string(numGold) + " goud gekregen voor je gebouwen die " + color + " zijn.\r\n" + getGoldInfo();
+}
+
+int Player::getAmountOfBuildCards()
+{
+	return bouwKaarten_.size();
+}
+
+std::vector<std::unique_ptr<BouwKaart>> Player::getAllBuildCards()
+{
+	std::vector<std::unique_ptr<BouwKaart>> result = std::move(bouwKaarten_);
+	bouwKaarten_.clear();
+	return result;
 }

@@ -19,7 +19,8 @@ enum class GameState
 	PickBuildCard,
 	PlayTurn,
 	ChooseCharacterToKill,
-	ChooseCharacterToRob
+	ChooseCharacterToRob,
+	ChooseBuildingToDestroy
 };
 
 
@@ -38,6 +39,7 @@ public:
 
 	void killCharacter();
 	void robCharacter();
+	void destroyBuilding();
 
 private:
 	GameController();
@@ -91,5 +93,8 @@ private:
 
 	void promptForRobCharacter();
 	void chooseCharacterToRob(std::string name);
+
+	void promptForDestroyBuilding();
+	void chooseBuildingToDestroy(std::string building);
 	
 };

@@ -43,6 +43,10 @@ public:
 	std::string buildCard(std::string card);
 
 	std::string newTurn(int currentCharacter);
+
+	int getAmountOfBuildCards();
+	std::vector<std::unique_ptr<BouwKaart>> getAllBuildCards();
+
 private:
 	std::string name;
 	int goudstukken_ = 0;

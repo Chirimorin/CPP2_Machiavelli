@@ -105,6 +105,15 @@ bool GameController::handleCommand(ClientCommand& command)
 			chooseCharacterToRob(command.get_cmd());
 			return true;
 		}
+		if (currentState_ == GameState::ChooseBuildingToDestroy) {
+			if (command.get_cmd() == "nee") {
+				promptPlayTurn();
+			}
+			if (command.get_cmd().length() > 6 && command.get_cmd().substr(0, 6) == "sloop ") {
+				chooseBuildingToDestroy(command.get_cmd().substr(6));
+				return true;
+			}
+		}
 	}
 
 	return false;
@@ -519,7 +528,7 @@ void GameController::useAbility()
 void GameController::killCharacter()
 {
 	currentState_ = GameState::ChooseCharacterToKill;
-	GameController::promptForKillCharacter();
+	promptForKillCharacter();
 }
 
 void GameController::promptForKillCharacter()
@@ -560,7 +569,7 @@ void GameController::chooseCharacterToKill(std::string name)
 void GameController::robCharacter()
 {
 	currentState_ = GameState::ChooseCharacterToRob;
-	GameController::promptForRobCharacter();
+	promptForRobCharacter();
 }
 
 void GameController::promptForRobCharacter()
@@ -598,4 +607,63 @@ void GameController::chooseCharacterToRob(std::string name)
 	messageAllPlayers("De " + (*it)->getName() + " wordt beroofd.");
 
 	promptPlayTurn();
+}
+
+void GameController::destroyBuilding()
+{
+	currentState_ = GameState::ChooseBuildingToDestroy;
+
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	// TODO: check of de speler er geld voor heeft
+	// TODO: check of de speler geen prediker is, zo ja, dan kunnen gebouwen niet gesloopt worden
+
+	// Check of andere speler gebouwen heeft
+	if (((*it).first->getAmountOfBuildCards() > 0) {
+		promptForDestroyBuilding();
+	}
+	else {
+		messagePlayer(currentPlayer_, "Er zijn geen gebouwen om te slopen.");
+		promptPlayTurn();
+	}
+}
+
+void GameController::promptForDestroyBuilding()
+{
+	messagePlayer(currentPlayer_, "Wil je een gebouw vernietigen, zo ja, welke gebouw?\r\n(sloop[gebouw] | nee");
+
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	(*it).first->getBuildingInfo();
+}
+
+void GameController::chooseBuildingToDestroy(std::string building)
+{
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	// TODO: bouwkaarten terug naar speler
+	std::vector<std::unique_ptr<BouwKaart>> bouwkaarten = (*it).first->getAllBuildCards(); 
+	
+	auto iteator = std::find_if(bouwkaarten.begin(), bouwkaarten.end(), [this, building](std::unique_ptr<BouwKaart>& k)
+	{
+		return k.get()->getName() == building;
+	});
+
+	if (iteator == bouwkaarten.end()) {
+		messagePlayer(currentPlayer_, building + " is geen geldig gebouw.");
+		promptForDestroyBuilding();
+		return;
+	}
+
+	
+	// TODO: check als een gebouw meer als 1 kost, of de speler geld voor heeft
 }
