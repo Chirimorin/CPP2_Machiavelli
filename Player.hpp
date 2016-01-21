@@ -18,7 +18,7 @@ class Player {
 public:
 	Player() {}
 	Player(const std::string& name) : name {name} {}
-	
+
 	std::string get_name() const { return name; }
 	void set_name(const std::string& new_name) { name = new_name; }
 
@@ -26,11 +26,12 @@ public:
 	void set_gold(const int& new_gold) { goudstukken_ = new_gold; }
 
 	void addBuildCard(std::unique_ptr<BouwKaart> buildCard);
+	std::unique_ptr<BouwKaart> takeBuildCard();
 	void addCharacterCard(std::unique_ptr<KarakterKaart> characterCard);
 
 	std::string getPlayerInfo();
 	std::string getCharacterCardInfo();
-	std::string getBuildingInfo();
+	std::string getBuildingInfo(bool isCurrentPlayer = true);
 	std::string getBuildCardInfo();
 	std::string getGoldInfo();
 
@@ -44,10 +45,15 @@ public:
 
 	std::string newTurn(int currentCharacter);
 
+	int getAmountOfBuildCards();
+	std::vector<std::unique_ptr<BouwKaart>> getAllBuildCards();
+	int getAmountOfBuildings() { return gebouwen_.size(); }
 	bool hasEightOrMoreBuildings();
 	void calculateScore(bool isWinner);
 	int getScore() const { return score_; }
 	int getRawScore() const { return rawScore_; }
+
+	bool tryDestroyBuilding(std::string name, int& gold);
 private:
 	std::string name;
 	int goudstukken_ = 0;

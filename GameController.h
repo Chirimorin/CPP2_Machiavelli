@@ -14,10 +14,13 @@ enum class GameState
 	NotStarted,
 	ChooseCharacter,
 	RemoveCharacter,
-	NewRound,
 	ChooseGoldOrCard,
 	PickBuildCard,
-	PlayTurn, 
+	PlayTurn,
+	ChooseCharacterToKill,
+	ChooseCharacterToRob,
+	ChooseBuildingToDestroy,
+	ChooseMageAbility,
 	Ended
 };
 
@@ -34,6 +37,14 @@ public:
 	bool handleCommand(ClientCommand& command);
 	void messageAllPlayers(std::string message);
 	void messagePlayer(std::shared_ptr<Player> player, std::string message);
+	void messageCurrentPlayer(std::string message);
+
+	void killCharacter();
+	void robCharacter();
+	void destroyBuilding();
+	void mageAbility();
+
+	void addBuildCard(std::unique_ptr<BouwKaart> bouwkaart);
 private:
 	GameController();
 	~GameController() {};
@@ -49,7 +60,11 @@ private:
 	bool cheat_ = false;
 
 	GameState currentState_ = GameState::NotStarted;
+	GameState previousState_ = GameState::NotStarted;
 
+	int murderedCharacter_ = -1;
+	int robbedCharacter_ = -1;
+	std::shared_ptr<Player> dief_;
 	std::shared_ptr<Player> winnaar_ = nullptr;
 
 	std::vector<std::unique_ptr<BouwKaart>> mogelijkeNieuweBouwkaarten_;
@@ -68,16 +83,31 @@ private:
 
 	void startRound();
 	void newTurn();
+	void promptNewTurn();
 	void addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player);
 
 	void addGold();
 	void chooseNewBuildCard();
 	void promptForGetNewBuildCard();
 	void getNewBuildCard(std::string name);
-	
+
 	void promptPlayTurn();
 	void buildCard(std::string card);
 	void useAbility();
+
+	void promptForKillCharacter();
+	void chooseCharacterToKill(std::string name);
+
+	void promptForRobCharacter();
+	void chooseCharacterToRob(std::string name);
+
+	void promptForDestroyBuilding();
+	void chooseBuildingToDestroy(std::string building);
+
+	void promptForChooseMageAbility();
+	void chooseMageAbility(std::string option);
+
+	void goToPreviousState();
 
 	void endGame();
 };

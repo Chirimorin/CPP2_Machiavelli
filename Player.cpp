@@ -15,6 +15,14 @@ void Player::addBuildCard(std::unique_ptr<BouwKaart> buildCard) {
 	bouwKaarten_.push_back(move(buildCard));
 }
 
+std::unique_ptr<BouwKaart> Player::takeBuildCard()
+{
+	auto it = bouwKaarten_.begin();
+	std::unique_ptr<BouwKaart> result = std::move(*it);
+	bouwKaarten_.erase(it);
+	return result;
+}
+
 void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard) {
 	karakterKaarten_.push_back(move(characterCard));
 }
@@ -37,9 +45,14 @@ std::string Player::getCharacterCardInfo()
 	return result;
 }
 
-std::string Player::getBuildingInfo()
+std::string Player::getBuildingInfo(bool isCurrentPlayer)
 {
-	std::string result = "Je hebt de volgende gebouwen: \r\n";
+	std::string result = "";
+
+	if (isCurrentPlayer)
+		result = "Je hebt de volgende gebouwen: \r\n";
+	else
+		result = "De tegenstander heeft de volgende gebouwen: \r\n";
 
 	for (unique_ptr<BouwKaart> & kaart : gebouwen_) {
 		result += kaart->getInfo();
@@ -96,8 +109,8 @@ std::string Player::getCharacterInfo(int number)
 }
 
 std::string Player::addGold(int gold)
-{ 
-	goudstukken_ += gold; 
+{
+	goudstukken_ += gold;
 	return "Je hebt nu " + std::to_string(goudstukken_) + " goudstuk" + (goudstukken_ == 1 ? "" : "ken");
 }
 
@@ -112,13 +125,13 @@ std::string Player::useAbility(int currentCharacter)
 	switch (currentCharacter)
 	{
 	case 1: // Moordenaar
-		// TODO: karakter vermoorden
+		GameController::getInstance().killCharacter();
 		break;
 	case 2: // Dief
-		// TODO: karakter bestelen
+		GameController::getInstance().robCharacter();
 		break;
 	case 3: // Magier
-		// TODO: handkaarten omruilen met speler of gelijk aantal omruilen met de bank
+		GameController::getInstance().mageAbility();
 		break;
 	case 4: // Koning
 		return getGoldForColor("geel");
@@ -130,11 +143,11 @@ std::string Player::useAbility(int currentCharacter)
 		// Bouwmeester heeft geen actieve ability
 		return "De bouwmeester heeft geen karaktereigenschap om te gebruiken.";
 	case 8: // Condotierre
-		// TODO: keuze om gebouw te vernietigen
+		GameController::getInstance().destroyBuilding();
 		return getGoldForColor("rood");
 	}
 
-	return "Je karaktereigenschap gebruiken is nog niet mogelijk";
+	return "";
 }
 
 std::string Player::buildCard(std::string card)
@@ -163,7 +176,7 @@ std::string Player::buildCard(std::string card)
 	{
 		return "Je hebt al een " + card + " in je stad. Je mag maar 1 gebouw van elk type hebben.";
 	}
-	
+
 	if (goudstukken_ >= (*it)->getPrice())
 	{
 		GameController::getInstance().messageAllPlayers(name + " bouwt een " + card + " voor " + std::to_string((*it)->getPrice()) + " goud.");
@@ -194,6 +207,18 @@ std::string Player::newTurn(int currentCharacter)
 	}
 
 	return "Je krijgt geen extra goud deze beurt.";
+}
+
+int Player::getAmountOfBuildCards()
+{
+	return bouwKaarten_.size();
+}
+
+std::vector<std::unique_ptr<BouwKaart>> Player::getAllBuildCards()
+{
+	std::vector<std::unique_ptr<BouwKaart>> result = std::move(bouwKaarten_);
+	bouwKaarten_.clear();
+	return result;
 }
 
 std::string Player::getGoldForColor(std::string color)
@@ -243,4 +268,31 @@ void Player::calculateScore(bool isWinner)
 	{
 		score_ += 2; // 2 extra punten, totaal 4
 	}
+}
+
+bool Player::tryDestroyBuilding(std::string name, int& gold)
+{
+	auto it = std::find_if(gebouwen_.begin(), gebouwen_.end(), [name](std::unique_ptr<BouwKaart>& b)
+	{
+		return name == b->getName();
+	});
+
+	if (it == gebouwen_.end())
+	{
+		GameController::getInstance().messageCurrentPlayer("Je tegenstander heeft geen " + name + " in zijn stad.");
+		return false;
+	}
+
+	if ((*it)->getPrice() - 1 > gold)
+	{
+		GameController::getInstance().messageCurrentPlayer("Je hebt niet genoeg goud om een " + name + " te slopen.");
+		return false;
+	}
+
+	gold -= ((*it)->getPrice() - 1);
+	GameController::getInstance().addBuildCard(std::move(*it));
+	gebouwen_.erase(it);
+	GameController::getInstance().messageAllPlayers("De condottiere sloopt de " + name + " van " + get_name() + ".");
+
+	return true;
 }

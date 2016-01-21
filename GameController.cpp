@@ -7,7 +7,7 @@
 
 namespace machiavelli {
 	const std::string clearPrompt{ "\r             \r" };
-	const std::string prompt       { "machiavelli> " };
+	const std::string prompt{ "machiavelli> " };
 }
 
 GameController& GameController::getInstance()
@@ -76,7 +76,7 @@ bool GameController::handleCommand(ClientCommand& command)
 			getNewBuildCard(command.get_cmd());
 			return true;
 		}
-	
+
 		if (command.get_cmd() == "end turn")
 		{
 			// Check of de speler als eerste 8 gebouwen heeft
@@ -86,9 +86,10 @@ bool GameController::handleCommand(ClientCommand& command)
 			nextPlayer();
 			return true;
 		}
-		
-		if (command.get_cmd().length() > 5 &&
-			command.get_cmd().substr(0,5) == "bouw ")
+
+		if (currentState_ == GameState::PlayTurn &&
+			command.get_cmd().length() > 5 &&
+			command.get_cmd().substr(0, 5) == "bouw ")
 		{
 			buildCard(command.get_cmd().substr(5));
 			return true;
@@ -96,6 +97,31 @@ bool GameController::handleCommand(ClientCommand& command)
 		if (command.get_cmd() == "karaktereigenschap")
 		{
 			useAbility();
+			return true;
+		}
+		if (currentState_ == GameState::ChooseCharacterToKill)
+		{
+			chooseCharacterToKill(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::ChooseCharacterToRob)
+		{
+			chooseCharacterToRob(command.get_cmd());
+			return true;
+		}
+		if (currentState_ == GameState::ChooseBuildingToDestroy) {
+			if (command.get_cmd() == "nee") {
+				goToPreviousState();
+			}
+			if (command.get_cmd().length() > 6 && 
+				command.get_cmd().substr(0, 6) == "sloop ") {
+				chooseBuildingToDestroy(command.get_cmd().substr(6));
+				return true;
+			}
+		}
+		if (currentState_ == GameState::ChooseMageAbility)
+		{
+			chooseMageAbility(command.get_cmd());
 			return true;
 		}
 	}
@@ -115,6 +141,11 @@ void GameController::messageAllPlayers(std::string message)
 void GameController::messagePlayer(std::shared_ptr<Player> speler, std::string message)
 {
 	*spelers_[speler] << machiavelli::clearPrompt << message << "\r\n" << machiavelli::prompt;
+}
+
+void GameController::messageCurrentPlayer(std::string message)
+{
+	messagePlayer(currentPlayer_, message);
 }
 
 GameController::GameController()
@@ -147,7 +178,7 @@ bool GameController::startGame()
 		messagePlayer(speler, speler->getBuildCardInfo());
 		messagePlayer(speler, speler->getGoldInfo());
 	}
-	
+
 	// Bepaal de koning
 	auto it = spelers_.begin();
 	std::advance(it, Random::getRandomNumber(0, static_cast<int>(spelers_.size() - 1)));
@@ -179,6 +210,11 @@ void GameController::nextPlayer()
 	else
 	{
 		++currentCharacter_;
+
+		if (currentCharacter_ == murderedCharacter_) {
+			++currentCharacter_;
+		}
+
 		if (currentCharacter_ > 8)
 		{
 			messageAllPlayers("Alle characters zijn aan de beurt geweest.");
@@ -204,7 +240,7 @@ void GameController::nextPlayer()
 			newTurn();
 		}
 	}
-		
+
 }
 
 void GameController::loadCharacterCards()
@@ -236,6 +272,11 @@ void GameController::distributeCharacterCards()
 	// Pak de gekozen karakterkaarten terug
 	for (std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> pair : spelers_)
 	{
+		if (pair.first->hasCharacterCard(4))
+		{
+			koning_ = pair.first;
+		}
+
 		for (std::unique_ptr<KarakterKaart>& kaart : pair.first->getAllCharacterCards())
 		{
 			karakterKaarten_.push_back(std::move(kaart));
@@ -262,7 +303,7 @@ void GameController::distributeCharacterCards()
 	messagePlayer(koning_, "Het karakter " + last->get()->getInfo() + " is weggegooid.");
 	discardedKarakterKaarten_.push_back(std::move(*last));
 	karakterKaarten_.erase(last, karakterKaarten_.end());
-	
+
 	messageAllPlayers(currentPlayer_->get_name() + " moet nu een characterkaart kiezen.");
 	promptForCharacterCard();
 }
@@ -270,7 +311,7 @@ void GameController::distributeCharacterCards()
 void GameController::promptForCharacterCard()
 {
 	messagePlayer(currentPlayer_, "Kies een van de volgende characterkaarten: ");
-	
+
 	std::stringstream ss = std::stringstream();
 
 	for (std::unique_ptr<KarakterKaart>& kaart : karakterKaarten_)
@@ -364,22 +405,38 @@ void GameController::startRound()
 {
 	currentState_ = GameState::PlayTurn;
 	currentCharacter_ = 0;
+	murderedCharacter_ = -1;
+	robbedCharacter_ = -1;
 	nextPlayer();
 }
 
 void GameController::newTurn()
 {
-	currentState_ = GameState::ChooseGoldOrCard;
 	messageAllPlayers(currentPlayer_->get_name() + ", de " + currentPlayer_->getCharacterInfo(currentCharacter_) + ", is nu aan de beurt.");
 	messagePlayer(currentPlayer_, currentPlayer_->getPlayerInfo());
 	messagePlayer(currentPlayer_, currentPlayer_->newTurn(currentCharacter_));
 
-	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | eigenschap]");
+	// Check of het karakter wordt bestolen
+	if (currentCharacter_ == robbedCharacter_) {
+		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+		{
+			return p.first->hasCharacterCard(2);
+		});
 
-	// TODO: zorgen dat ze speler meerdere acties kan doen tijdens zijn beurt in plaats van 1:
-	// - 2 goudstukken of bouwkaart
-	// - bouwen
-	// - karakter eigenschap gebruiken
+		messageAllPlayers(currentPlayer_->get_name() + " is beroofd door de dief en heeft geen goudstukken meer.");
+		messagePlayer((*it).first, (*it).first->addGold(currentPlayer_->get_gold()));
+		currentPlayer_->set_gold(0);
+
+		messagePlayer(currentPlayer_, currentPlayer_->addGold(0));
+	}
+
+	promptNewTurn();
+}
+
+void GameController::promptNewTurn()
+{
+	currentState_ = GameState::ChooseGoldOrCard;
+	messagePlayer(currentPlayer_, "Wil je 2 goudstukken, een bouwkaart of je karaktereigenschap gebruiken?\r\n[goud | bouwkaart | karaktereigenschap]");
 }
 
 void GameController::addRandomCharacterCard(std::vector<std::unique_ptr<KarakterKaart>> &currentKarakterKaarten, std::shared_ptr<Player> player)
@@ -401,8 +458,6 @@ void GameController::addGold()
 
 void GameController::chooseNewBuildCard()
 {
-	currentState_ = GameState::PickBuildCard;
-
 	for (int i = 0; i < 2; ++i)
 	{
 		mogelijkeNieuweBouwkaarten_.push_back(std::move(kaartStapel_->getBuildCard()));
@@ -413,6 +468,8 @@ void GameController::chooseNewBuildCard()
 
 void GameController::promptForGetNewBuildCard()
 {
+	currentState_ = GameState::PickBuildCard;
+
 	if (currentCharacter_ == 7) // bouwmeester krijgt beide kaarten
 	{
 		std::string result = "Je pakt de volgende bouwkaarten:\r\n";
@@ -484,6 +541,298 @@ void GameController::useAbility()
 {
 	messagePlayer(currentPlayer_, currentPlayer_->useAbility(currentCharacter_));
 }
+
+void GameController::killCharacter()
+{
+	previousState_ = currentState_;
+	promptForKillCharacter();
+}
+
+void GameController::promptForKillCharacter()
+{
+	currentState_ = GameState::ChooseCharacterToKill;
+	messagePlayer(currentPlayer_, "Welk karakter wil je vermoorden?\r\n[ Dief | Magier | Koning | Prediker | Koopman | Bouwmeester | Condottiere ]");
+}
+
+void GameController::chooseCharacterToKill(std::string name)
+{
+	murderedCharacter_ = -1;
+
+	if (name == "Dief")
+		murderedCharacter_ = 2;
+	if (name == "Magier")
+		murderedCharacter_ = 3;
+	if (name == "Koning")
+		murderedCharacter_ = 4;
+	if (name == "Prediker")
+		murderedCharacter_ = 5;
+	if (name == "Koopman")
+		murderedCharacter_ = 6;
+	if (name == "Bouwmeester")
+		murderedCharacter_ = 7;
+	if (name == "Condottiere")
+		murderedCharacter_ = 8;
+
+	if (murderedCharacter_ == -1)
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldig karakter.");
+		promptForKillCharacter();
+		return;
+	}
+
+	messageAllPlayers("De " + name + " wordt vermoord.");
+
+	goToPreviousState();
+}
+
+void GameController::robCharacter()
+{
+	previousState_ = currentState_;
+	promptForRobCharacter();
+}
+
+void GameController::promptForRobCharacter()
+{
+	currentState_ = GameState::ChooseCharacterToRob;
+	std::string result = "Welk karakter wil je beroven?\r\n[ ";
+
+	if (murderedCharacter_ != 3)
+		result += "Magier | ";
+	if (murderedCharacter_ != 4)
+		result += "Koning | ";
+	if (murderedCharacter_ != 5)
+		result += "Prediker | ";
+	if (murderedCharacter_ != 6)
+		result += "Koopman | ";
+	if (murderedCharacter_ != 7)
+		result += "Bouwmeester | ";
+	if (murderedCharacter_ != 8)
+		result += "Condottiere ";
+	else
+		result = result.substr(0, result.size() - 2);
+	result += "]";
+
+	messagePlayer(currentPlayer_, result);
+}
+
+void GameController::chooseCharacterToRob(std::string name)
+{
+	robbedCharacter_ = -1;
+
+	if (name == "Magier")
+		robbedCharacter_ = 3;
+	if (name == "Koning")
+		robbedCharacter_ = 4;
+	if (name == "Prediker")
+		robbedCharacter_ = 5;
+	if (name == "Koopman")
+		robbedCharacter_ = 6;
+	if (name == "Bouwmeester")
+		robbedCharacter_ = 7;
+	if (name == "Condottiere")
+		robbedCharacter_ = 8;
+
+	if (robbedCharacter_ == -1)
+	{
+		messagePlayer(currentPlayer_, name + " is geen geldig karakter.");
+		promptForRobCharacter();
+		return;
+	}
+
+	if (robbedCharacter_ == murderedCharacter_)
+	{
+		messagePlayer(currentPlayer_, "De " + name + " is vermoord en kan niet bestolen worden.");
+		promptForRobCharacter();
+		return;
+	}
+
+	messageAllPlayers("De " + name + " wordt bestolen.");
+
+	goToPreviousState();
+}
+
+void GameController::destroyBuilding()
+{
+	previousState_ = currentState_;
+
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	if ((*it).first->hasCharacterCard(5))
+	{
+		messagePlayer(currentPlayer_, "Je tegenstander is een prediker, zijn gebouwen kunnen niet gesloopt worden.");
+		goToPreviousState();
+		return;
+	}
+
+	// TODO: check of de speler er geld voor heeft
+
+	// Check of andere speler gebouwen heeft
+	if ((*it).first->getAmountOfBuildings() > 0) {
+		promptForDestroyBuilding();
+		return;
+	}
+
+	messagePlayer(currentPlayer_, "Er zijn geen gebouwen om te slopen.");
+	goToPreviousState();
+}
+
+void GameController::mageAbility()
+{
+	previousState_ = currentState_;
+	promptForChooseMageAbility();
+}
+
+void GameController::addBuildCard(std::unique_ptr<BouwKaart> bouwkaart)
+{
+	kaartStapel_->addBuildCard(std::move(bouwkaart));
+}
+
+void GameController::promptForDestroyBuilding()
+{
+	currentState_ = GameState::ChooseBuildingToDestroy;
+
+	messagePlayer(currentPlayer_, "Wil je een gebouw vernietigen, zo ja, welke gebouw?\r\n( sloop [gebouw] | nee )");
+
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	messagePlayer(currentPlayer_, (*it).first->getBuildingInfo(false));
+}
+
+void GameController::chooseBuildingToDestroy(std::string building)
+{
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	int currentGold = currentPlayer_->get_gold();
+	if ((*it).first->tryDestroyBuilding(building, currentGold))
+	{
+		currentPlayer_->set_gold(currentGold);
+		messagePlayer(currentPlayer_, currentPlayer_->addGold(0));
+		goToPreviousState();
+		return;
+	}
+
+	promptForDestroyBuilding();
+}
+
+void GameController::promptForChooseMageAbility()
+{
+	currentState_ = GameState::ChooseMageAbility;
+
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	std::string message = "Wil je je hand (" + std::to_string(currentPlayer_->getAmountOfBuildCards()) + " kaarten) ruilen met de andere speler (" + std::to_string((*it).first->getAmountOfBuildCards()) + " kaarten) of met de stapel?\r\n( Speler | Stapel [aantal] )";
+
+	messagePlayer(currentPlayer_, message);
+}
+
+void GameController::chooseMageAbility(std::string option)
+{
+	if (option == "Speler")
+	{
+		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+		{
+			return p.first != currentPlayer_;
+		});
+
+		std::vector<std::unique_ptr<BouwKaart>> currentPlayerCards = std::move(currentPlayer_->getAllBuildCards());
+		std::vector<std::unique_ptr<BouwKaart>> otherPlayerCards = std::move((*it).first->getAllBuildCards());
+
+		for (std::unique_ptr<BouwKaart>& b : currentPlayerCards)
+		{
+			(*it).first->addBuildCard(std::move(b));
+		}
+		currentPlayerCards.clear();
+
+		for (std::unique_ptr<BouwKaart>& b : otherPlayerCards)
+		{
+			currentPlayer_->addBuildCard(std::move(b));
+		}
+		otherPlayerCards.clear();
+
+		messageAllPlayers(currentPlayer_->get_name() + " wisselt zijn hand met " + (*it).first->get_name() + ".");
+		messagePlayer((*it).first, (*it).first->getBuildCardInfo());
+		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
+
+		goToPreviousState();
+		return;
+	}
+
+	if (option.length() > 7 &&
+		option.substr(0,7) == "Stapel ")
+	{
+		int numCards = currentPlayer_->getAmountOfBuildCards();
+		int amount;
+
+		try
+		{
+			amount = stoi(option.substr(7));
+		}
+		catch(...)
+		{
+			messageCurrentPlayer("'" + option.substr(7) + "' is geen geldig aantal.");
+			promptForChooseMageAbility();
+			return;
+		}
+
+		if (amount < 0)
+		{
+			messageCurrentPlayer("'" + option.substr(7) + "' is geen geldig aantal.");
+			promptForChooseMageAbility();
+			return;
+		}
+
+		if (numCards < amount)
+		{
+			messageCurrentPlayer("Je hebt maar " + std::to_string(numCards) + " kaarten om te ruilen.");
+			promptForChooseMageAbility();
+			return;
+		}
+
+		for (int i = 0; i < amount; ++i)
+		{
+			kaartStapel_->addBuildCard(std::move(currentPlayer_->takeBuildCard()));
+		}
+
+		for (int i = 0; i < amount; ++i)
+		{
+			currentPlayer_->addBuildCard(std::move(kaartStapel_->getBuildCard()));
+		}
+
+		messageAllPlayers(currentPlayer_->get_name() + " wisselt " + std::to_string(amount) + " kaarten om met de stapel.");
+		messageCurrentPlayer(currentPlayer_->getBuildCardInfo());
+		goToPreviousState();
+		return;
+	}
+
+	messageCurrentPlayer(option + " is geen geldige optie.");
+	promptForChooseMageAbility();
+}
+
+void GameController::goToPreviousState()
+{
+	if (previousState_ == GameState::ChooseGoldOrCard)
+	{
+		promptNewTurn();
+	}
+	else
+	{
+		promptPlayTurn();
+	}
+}
+
+// TODO: check als een gebouw meer als 1 kost, of de speler geld voor heeft
 
 void GameController::endGame()
 {
