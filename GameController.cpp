@@ -111,7 +111,7 @@ bool GameController::handleCommand(ClientCommand& command)
 		}
 		if (currentState_ == GameState::ChooseBuildingToDestroy) {
 			if (command.get_cmd() == "nee") {
-				promptPlayTurn();
+				goToPreviousState();
 			}
 			if (command.get_cmd().length() > 6 && 
 				command.get_cmd().substr(0, 6) == "sloop ") {
