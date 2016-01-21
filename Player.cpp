@@ -153,6 +153,16 @@ std::string Player::buildCard(std::string card)
 	{
 		return "'" + card + "' is geen geldige bouwkaart.";
 	}
+
+	auto it2 = std::find_if(gebouwen_.begin(), gebouwen_.end(), [&card](std::unique_ptr<BouwKaart>& b)
+	{
+		return b->getName() == card;
+	});
+
+	if (it2 != gebouwen_.end())
+	{
+		return "Je hebt al een " + card + " in je stad. Je mag maar 1 gebouw van elk type hebben.";
+	}
 	
 	if (goudstukken_ >= (*it)->getPrice())
 	{
