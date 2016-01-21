@@ -741,7 +741,31 @@ void GameController::chooseMageAbility(std::string option)
 {
 	if (option == "Speler")
 	{
-		// todo: wissel kaarten met andere speler
+		auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+		{
+			return p.first != currentPlayer_;
+		});
+
+		std::vector<std::unique_ptr<BouwKaart>> currentPlayerCards = std::move(currentPlayer_->getAllBuildCards());
+		std::vector<std::unique_ptr<BouwKaart>> otherPlayerCards = std::move((*it).first->getAllBuildCards());
+
+		for (std::unique_ptr<BouwKaart>& b : currentPlayerCards)
+		{
+			(*it).first->addBuildCard(std::move(b));
+		}
+		currentPlayerCards.clear();
+
+		for (std::unique_ptr<BouwKaart>& b : otherPlayerCards)
+		{
+			currentPlayer_->addBuildCard(std::move(b));
+		}
+		otherPlayerCards.clear();
+
+		messageAllPlayers(currentPlayer_->get_name() + " wisselt zijn hand met " + (*it).first->get_name() + ".");
+		messagePlayer((*it).first, (*it).first->getBuildCardInfo());
+		messagePlayer(currentPlayer_, currentPlayer_->getBuildCardInfo());
+
+		goToPreviousState();
 		return;
 	}
 
@@ -756,6 +780,13 @@ void GameController::chooseMageAbility(std::string option)
 			amount = stoi(option.substr(7));
 		}
 		catch(...)
+		{
+			messageCurrentPlayer("'" + option.substr(7) + "' is geen geldig aantal.");
+			promptForChooseMageAbility();
+			return;
+		}
+
+		if (amount < 0)
 		{
 			messageCurrentPlayer("'" + option.substr(7) + "' is geen geldig aantal.");
 			promptForChooseMageAbility();
@@ -779,6 +810,7 @@ void GameController::chooseMageAbility(std::string option)
 			currentPlayer_->addBuildCard(std::move(kaartStapel_->getBuildCard()));
 		}
 
+		messageAllPlayers(currentPlayer_->get_name() + " wisselt " + std::to_string(amount) + " kaarten om met de stapel.");
 		messageCurrentPlayer(currentPlayer_->getBuildCardInfo());
 		goToPreviousState();
 		return;
