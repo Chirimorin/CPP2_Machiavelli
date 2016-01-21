@@ -20,6 +20,7 @@ enum class GameState
 	ChooseCharacterToKill,
 	ChooseCharacterToRob,
 	ChooseBuildingToDestroy,
+	ChooseMageAbility,
 	Ended
 };
 
@@ -41,6 +42,7 @@ public:
 	void killCharacter();
 	void robCharacter();
 	void destroyBuilding();
+	void mageAbility();
 
 	void addBuildCard(std::unique_ptr<BouwKaart> bouwkaart);
 private:
@@ -101,6 +103,9 @@ private:
 
 	void promptForDestroyBuilding();
 	void chooseBuildingToDestroy(std::string building);
+
+	void promptForChooseMageAbility();
+	void chooseMageAbility(std::string option);
 
 	void goToPreviousState();
 

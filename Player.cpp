@@ -15,6 +15,14 @@ void Player::addBuildCard(std::unique_ptr<BouwKaart> buildCard) {
 	bouwKaarten_.push_back(move(buildCard));
 }
 
+std::unique_ptr<BouwKaart> Player::takeBuildCard()
+{
+	auto it = bouwKaarten_.begin();
+	std::unique_ptr<BouwKaart> result = std::move(*it);
+	bouwKaarten_.erase(it);
+	return result;
+}
+
 void Player::addCharacterCard(std::unique_ptr<KarakterKaart> characterCard) {
 	karakterKaarten_.push_back(move(characterCard));
 }
@@ -118,14 +126,12 @@ std::string Player::useAbility(int currentCharacter)
 	{
 	case 1: // Moordenaar
 		GameController::getInstance().killCharacter();
-		return "";
+		break;
 	case 2: // Dief
 		GameController::getInstance().robCharacter();
-		return "";
+		break;
 	case 3: // Magier
-		// TODO: handkaarten omruilen met speler of gelijk aantal omruilen met de bank
-		// al zijn handkaarten(ook als dit 0 is) voor alle handkaarten van een andere speler omruilen of
-		// naar keuze een aantal handkaarten afleggen en een gelijk aantal gebouwenkaarten trekken
+		GameController::getInstance().mageAbility();
 		break;
 	case 4: // Koning
 		return getGoldForColor("geel");
@@ -137,12 +143,11 @@ std::string Player::useAbility(int currentCharacter)
 		// Bouwmeester heeft geen actieve ability
 		return "De bouwmeester heeft geen karaktereigenschap om te gebruiken.";
 	case 8: // Condotierre
-		// TODO: keuze om gebouw te vernietigen
 		GameController::getInstance().destroyBuilding();
 		return getGoldForColor("rood");
 	}
 
-	return "Je karaktereigenschap gebruiken is nog niet mogelijk";
+	return "";
 }
 
 std::string Player::buildCard(std::string card)

@@ -119,6 +119,11 @@ bool GameController::handleCommand(ClientCommand& command)
 				return true;
 			}
 		}
+		if (currentState_ == GameState::ChooseMageAbility)
+		{
+			chooseMageAbility(command.get_cmd());
+			return true;
+		}
 	}
 
 	return false;
@@ -540,12 +545,12 @@ void GameController::useAbility()
 void GameController::killCharacter()
 {
 	previousState_ = currentState_;
-	currentState_ = GameState::ChooseCharacterToKill;
 	promptForKillCharacter();
 }
 
 void GameController::promptForKillCharacter()
 {
+	currentState_ = GameState::ChooseCharacterToKill;
 	messagePlayer(currentPlayer_, "Welk karakter wil je vermoorden?\r\n[ Dief | Magier | Koning | Prediker | Koopman | Bouwmeester | Condottiere ]");
 }
 
@@ -583,12 +588,12 @@ void GameController::chooseCharacterToKill(std::string name)
 void GameController::robCharacter()
 {
 	previousState_ = currentState_;
-	currentState_ = GameState::ChooseCharacterToRob;
 	promptForRobCharacter();
 }
 
 void GameController::promptForRobCharacter()
 {
+	currentState_ = GameState::ChooseCharacterToRob;
 	std::string result = "Welk karakter wil je beroven?\r\n[ ";
 
 	if (murderedCharacter_ != 3)
@@ -648,6 +653,8 @@ void GameController::chooseCharacterToRob(std::string name)
 
 void GameController::destroyBuilding()
 {
+	previousState_ = currentState_;
+
 	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
 	{
 		return p.first != currentPlayer_;
@@ -670,6 +677,12 @@ void GameController::destroyBuilding()
 
 	messagePlayer(currentPlayer_, "Er zijn geen gebouwen om te slopen.");
 	goToPreviousState();
+}
+
+void GameController::mageAbility()
+{
+	previousState_ = currentState_;
+	promptForChooseMageAbility();
 }
 
 void GameController::addBuildCard(std::unique_ptr<BouwKaart> bouwkaart)
@@ -708,6 +721,71 @@ void GameController::chooseBuildingToDestroy(std::string building)
 	}
 
 	promptForDestroyBuilding();
+}
+
+void GameController::promptForChooseMageAbility()
+{
+	currentState_ = GameState::ChooseMageAbility;
+
+	auto it = std::find_if(spelers_.begin(), spelers_.end(), [&](std::pair<std::shared_ptr<Player>, std::shared_ptr<Socket>> p)
+	{
+		return p.first != currentPlayer_;
+	});
+
+	std::string message = "Wil je je hand (" + std::to_string(currentPlayer_->getAmountOfBuildCards()) + " kaarten) ruilen met de andere speler (" + std::to_string((*it).first->getAmountOfBuildCards()) + " kaarten) of met de stapel?\r\n( Speler | Stapel [aantal] )";
+
+	messagePlayer(currentPlayer_, message);
+}
+
+void GameController::chooseMageAbility(std::string option)
+{
+	if (option == "Speler")
+	{
+		// todo: wissel kaarten met andere speler
+		return;
+	}
+
+	if (option.length() > 7 &&
+		option.substr(0,7) == "Stapel ")
+	{
+		int numCards = currentPlayer_->getAmountOfBuildCards();
+		int amount;
+
+		try
+		{
+			amount = stoi(option.substr(7));
+		}
+		catch(...)
+		{
+			messageCurrentPlayer("'" + option.substr(7) + "' is geen geldig aantal.");
+			promptForChooseMageAbility();
+			return;
+		}
+
+		if (numCards < amount)
+		{
+			messageCurrentPlayer("Je hebt maar " + std::to_string(numCards) + " kaarten om te ruilen.");
+			promptForChooseMageAbility();
+			return;
+		}
+
+		for (int i = 0; i < amount; ++i)
+		{
+			kaartStapel_->addBuildCard(std::move(currentPlayer_->takeBuildCard()));
+		}
+
+		for (int i = 0; i < amount; ++i)
+		{
+			currentPlayer_->addBuildCard(std::move(kaartStapel_->getBuildCard()));
+		}
+
+		messageCurrentPlayer(currentPlayer_->getBuildCardInfo());
+		goToPreviousState();
+		return;
+	}
+
+	messageCurrentPlayer(option + " is geen geldige optie.");
+	promptForChooseMageAbility();
 }
 
 void GameController::goToPreviousState()

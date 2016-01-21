@@ -26,6 +26,7 @@ public:
 	void set_gold(const int& new_gold) { goudstukken_ = new_gold; }
 
 	void addBuildCard(std::unique_ptr<BouwKaart> buildCard);
+	std::unique_ptr<BouwKaart> takeBuildCard();
 	void addCharacterCard(std::unique_ptr<KarakterKaart> characterCard);
 
 	std::string getPlayerInfo();
